@@ -5,10 +5,8 @@ import { RideTimeline } from '../Ride/RideTimeline'
 
 interface RideHistoryProps {
   userId: string
-  isDark: boolean
-  onToggleDarkMode: () => void
-  onLogout: () => void
   refreshKey: number
+  onBack: () => void
 }
 
 function formatDate(iso: string): string {
@@ -39,10 +37,8 @@ function formatDurationMin(seconds: number | null): string {
 
 export function RideHistory({
   userId,
-  isDark,
-  onToggleDarkMode,
-  onLogout,
   refreshKey,
+  onBack,
 }: RideHistoryProps) {
   const [rides, setRides] = useState<Ride[]>([])
   const [loading, setLoading] = useState(true)
@@ -171,37 +167,12 @@ export function RideHistory({
         <h2 className="text-lg font-medium text-gray-900 dark:text-zinc-100">
           Rides
         </h2>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onToggleDarkMode}
-            className="relative w-12 h-6 rounded-full bg-gray-200 dark:bg-zinc-700 transition-colors duration-300"
-            aria-label="Toggle dark mode"
-          >
-            <span
-              className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white dark:bg-zinc-900 shadow flex items-center justify-center transition-transform duration-300 ${
-                isDark ? 'translate-x-6' : 'translate-x-0'
-              }`}
-            >
-              <svg
-                className="w-3 h-3 transition-transform duration-300"
-                viewBox="0 0 16 16"
-                fill="currentColor"
-              >
-                {isDark ? (
-                  <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z" />
-                ) : (
-                  <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z" />
-                )}
-              </svg>
-            </span>
-          </button>
-          <button
-            onClick={onLogout}
-            className="text-sm text-red-600 dark:text-red-400 underline"
-          >
-            Log out
-          </button>
-        </div>
+        <button
+          onClick={onBack}
+          className="text-sm text-gray-500 dark:text-zinc-400 underline"
+        >
+          Back
+        </button>
       </div>
 
       {loading && (

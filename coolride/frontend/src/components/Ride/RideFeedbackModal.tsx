@@ -119,7 +119,7 @@ export function RideFeedbackModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[1100] bg-white dark:bg-zinc-950 overflow-y-auto">
+    <div className="absolute inset-0 z-[1100] bg-white dark:bg-zinc-950 overflow-y-auto">
       <div className="max-w-sm mx-auto px-4 py-6">
         <h2 className="text-lg font-medium text-gray-900 dark:text-zinc-100 mb-6">
           Ride Feedback

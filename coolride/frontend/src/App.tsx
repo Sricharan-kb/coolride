@@ -12,6 +12,7 @@ import { WeatherWidget } from './components/Weather/WeatherWidget'
 import { RideFeedbackModal } from './components/Ride/RideFeedbackModal'
 import { RideTimeline } from './components/Ride/RideTimeline'
 import { RideHistory } from './components/Profile/RideHistory'
+import { UserProfile } from './components/Profile/UserProfile'
 import { useGeolocation } from './hooks/useGeolocation'
 import { useSensors } from './hooks/useSensors'
 import { useWeather } from './hooks/useWeather'
@@ -43,6 +44,7 @@ export function App() {
   const [feedbackRideId, setFeedbackRideId] = useState<string | null>(null)
   const [feedbackStartedAt, setFeedbackStartedAt] = useState('')
   const [showTimeline, setShowTimeline] = useState(false)
+  const [showRideHistory, setShowRideHistory] = useState(false)
   const [timelinePoints, setTimelinePoints] = useState<RidePoint[] | null>(null)
   const [timelineRoute, setTimelineRoute] = useState<[number, number][] | null>(null)
   const [tick, setTick] = useState(0)
@@ -280,6 +282,7 @@ export function App() {
     setRideId(null)
     setShowFeedback(false)
     setShowTimeline(false)
+    setShowRideHistory(false)
   }, [])
 
   const durationSeconds =
@@ -329,7 +332,7 @@ export function App() {
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950 text-gray-900 dark:text-zinc-100 flex flex-col">
       <div className="flex-1 relative min-h-0">
-        {activeTab === 'map' && !showTimeline && (
+        {activeTab === 'map' && (
           <div className="absolute inset-0">
             <RideMap
               currentPosition={
@@ -446,45 +449,50 @@ export function App() {
                 </button>
                 <RideTimeline points={timelinePoints} route={timelineRoute} />
               </div>
-            ) : (
+            ) : showRideHistory ? (
               <RideHistory
                 userId={userId}
+                refreshKey={ridesRefreshKey}
+                onBack={() => setShowRideHistory(false)}
+              />
+            ) : (
+              <UserProfile
+                userId={userId}
+                email={session?.user?.email ?? ''}
                 isDark={isDark}
                 onToggleDarkMode={handleToggleDarkMode}
                 onLogout={handleLogout}
-                refreshKey={ridesRefreshKey}
+                onViewRideHistory={() => setShowRideHistory(true)}
               />
             )}
           </div>
         )}
+
+        {showFeedback && feedbackRideId && (
+          <RideFeedbackModal
+            rideId={feedbackRideId}
+            userId={userId}
+            startedAt={feedbackStartedAt}
+            onSubmit={handleFeedbackSubmit}
+          />
+        )}
       </div>
 
-      {!showFeedback && (
-        <nav className="flex-shrink-0 border-t border-gray-200 dark:border-zinc-800 flex">
-          {(['map', 'ride', 'profile'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`flex-1 py-3 text-sm font-medium ${
-                activeTab === tab
-                  ? 'text-emerald-600 dark:text-emerald-400'
-                  : 'text-gray-500 dark:text-zinc-400'
-              }`}
-            >
-              {tab === 'map' ? 'Map' : tab === 'ride' ? 'Ride' : 'Profile'}
-            </button>
-          ))}
-        </nav>
-      )}
-
-      {showFeedback && feedbackRideId && (
-        <RideFeedbackModal
-          rideId={feedbackRideId}
-          userId={userId}
-          startedAt={feedbackStartedAt}
-          onSubmit={handleFeedbackSubmit}
-        />
-      )}
+      <nav className="flex-shrink-0 border-t border-gray-200 dark:border-zinc-800 flex">
+        {(['map', 'ride', 'profile'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`flex-1 py-3 text-sm font-medium ${
+              activeTab === tab
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : 'text-gray-500 dark:text-zinc-400'
+            }`}
+          >
+            {tab === 'map' ? 'Map' : tab === 'ride' ? 'Ride' : 'Profile'}
+          </button>
+        ))}
+      </nav>
     </div>
   )
 }
