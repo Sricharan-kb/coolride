@@ -162,15 +162,15 @@ export function App() {
                   lastLux={recorder.lastPoint?.lux ?? null}
                   isVisible
                 />
-                {recorder.lux !== null && (
+                {recorder.lux != null && (
                   <div className="mt-3 text-sm text-gray-500 dark:text-zinc-400">
                     Light: {recorder.lux.toFixed(0)} lux
                   </div>
                 )}
                 {recorder.acceleration && (
                   <div className="mt-1 text-sm text-gray-500 dark:text-zinc-400">
-                    Accel: {recorder.acceleration.x.toFixed(1)},{' '}
-                    {recorder.acceleration.y.toFixed(1)}, {recorder.acceleration.z.toFixed(1)} m/s²
+                    Accel: {recorder.acceleration.x?.toFixed(1) ?? '—'},{' '}
+                    {recorder.acceleration.y?.toFixed(1) ?? '—'}, {recorder.acceleration.z?.toFixed(1) ?? '—'} m/s²
                   </div>
                 )}
                 <div className="mt-6 flex justify-center">

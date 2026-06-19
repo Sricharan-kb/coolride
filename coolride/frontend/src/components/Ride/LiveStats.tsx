@@ -45,12 +45,12 @@ export function LiveStats({
           {currentSpeed.toFixed(1)} km/h
         </span>
       </div>
-      {(lastTemp !== null || lastHumidity !== null || lastLux !== null) && (
+      {(lastTemp != null || lastHumidity != null || lastLux != null) && (
         <div className="flex justify-between text-sm mt-1 pt-1 border-t border-gray-100 dark:border-zinc-800">
           <span className="text-gray-500 dark:text-zinc-400">
-            {lastTemp !== null && `${lastTemp.toFixed(0)}°C`}
-            {lastHumidity !== null && ` · ${lastHumidity}%`}
-            {lastLux !== null && ` · ${lastLux.toFixed(0)} lx`}
+            {lastTemp != null && `${lastTemp.toFixed(0)}°C`}
+            {lastHumidity != null && ` · ${lastHumidity}%`}
+            {lastLux != null && ` · ${lastLux.toFixed(0)} lx`}
           </span>
         </div>
       )}

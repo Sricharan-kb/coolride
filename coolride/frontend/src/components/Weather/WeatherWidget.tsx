@@ -15,7 +15,7 @@ export function WeatherWidget({
   icon,
   error,
 }: WeatherWidgetProps) {
-  if (temperature === null && humidity === null) {
+  if (temperature == null && humidity == null) {
     return (
       <div className="bg-white/90 dark:bg-zinc-900/90 px-3 py-2 text-sm text-gray-500 dark:text-zinc-400">
         {error ?? 'Weather unavailable'}
@@ -35,10 +35,10 @@ export function WeatherWidget({
         )}
         <div>
           <div className="text-gray-900 dark:text-zinc-100 font-medium">
-            {temperature !== null ? `${temperature.toFixed(0)}°C` : '—'}
-            {humidity !== null ? ` · ${humidity}%` : ''}
+            {temperature != null ? `${temperature.toFixed(0)}°C` : '—'}
+            {humidity != null ? ` · ${humidity}%` : ''}
           </div>
-          {feelsLike !== null && (
+          {feelsLike != null && (
             <div className="text-xs text-gray-500 dark:text-zinc-400">
               Feels {feelsLike.toFixed(0)}°C
             </div>

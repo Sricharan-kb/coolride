@@ -24,8 +24,8 @@ function formatTimeRange(start: string, end: string | null): string {
   return `${fmt(start)} - ${fmt(end)}`
 }
 
-function formatDistanceKm(meters: number | null): string {
-  if (meters === null) return '—'
+function formatDistanceKm(meters: number | null | undefined): string {
+  if (meters == null) return '—'
   return `${(meters / 1000).toFixed(1)} km`
 }
 

@@ -57,14 +57,14 @@ export function RideTimeline({ points, route }: RideTimelineProps) {
             </span>
           </div>
           <div className="text-sm text-gray-500 dark:text-zinc-400">
-            {current.temperature !== null &&
+            {current.temperature != null &&
               `${current.temperature.toFixed(0)}°C`}
-            {current.humidity !== null && `  ·  ${current.humidity}%`}
-            {current.lux !== null && `  ·  ${current.lux.toFixed(0)} lux`}
+            {current.humidity != null && `  ·  ${current.humidity}%`}
+            {current.lux != null && `  ·  ${current.lux.toFixed(0)} lux`}
           </div>
           <div className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
-            {current.location.lat.toFixed(4)}°N,{' '}
-            {current.location.lng.toFixed(4)}°E
+            {current.location?.lat?.toFixed(4) ?? '—'}°N,{' '}
+            {current.location?.lng?.toFixed(4) ?? '—'}°E
           </div>
         </div>
       )}
