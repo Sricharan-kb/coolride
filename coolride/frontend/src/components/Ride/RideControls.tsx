@@ -19,7 +19,7 @@ export function RideControls({
     return (
       <button
         onClick={onStart}
-        className="bg-emerald-600 dark:bg-emerald-400 text-white dark:text-zinc-950 w-48 py-3 text-base font-medium"
+        className="bg-emerald-600 dark:bg-emerald-400 text-white dark:text-zinc-950 w-full max-w-xs px-4 py-3.5 text-base font-medium"
       >
         START RIDE
       </button>
@@ -28,16 +28,16 @@ export function RideControls({
 
   if (rideState === 'recording') {
     return (
-      <div className="flex gap-3">
+      <div className="flex gap-3 w-full px-4 max-w-xs">
         <button
           onClick={onPause}
-          className="bg-amber-500 text-white dark:text-zinc-950 w-32 py-3 text-base font-medium"
+          className="bg-amber-500 text-white dark:text-zinc-950 flex-1 py-3.5 text-base font-medium"
         >
           PAUSE
         </button>
         <button
           onClick={onStop}
-          className="bg-red-600 dark:bg-red-400 text-white dark:text-zinc-950 w-32 py-3 text-base font-medium"
+          className="bg-red-600 dark:bg-red-400 text-white dark:text-zinc-950 flex-1 py-3.5 text-base font-medium"
         >
           STOP
         </button>
@@ -46,16 +46,16 @@ export function RideControls({
   }
 
   return (
-    <div className="flex gap-3">
+    <div className="flex gap-3 w-full px-4 max-w-xs">
       <button
         onClick={onResume}
-        className="bg-emerald-600 dark:bg-emerald-400 text-white dark:text-zinc-950 w-32 py-3 text-base font-medium"
+        className="bg-emerald-600 dark:bg-emerald-400 text-white dark:text-zinc-950 flex-1 py-3.5 text-base font-medium"
       >
         RESUME
       </button>
       <button
         onClick={onStop}
-        className="bg-red-600 dark:bg-red-400 text-white dark:text-zinc-950 w-32 py-3 text-base font-medium"
+        className="bg-red-600 dark:bg-red-400 text-white dark:text-zinc-950 flex-1 py-3.5 text-base font-medium"
       >
         STOP
       </button>

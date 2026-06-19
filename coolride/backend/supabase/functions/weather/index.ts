@@ -7,11 +7,31 @@ const WEATHERAPI_BASE = "https://api.weatherapi.com/v1/current.json";
 
 // Deno provides a global `serve` function in the runtime.
 Deno.serve(async (req: Request) => {
-  const url = new URL(req.url);
-  const lat = url.searchParams.get("lat");
-  const lon = url.searchParams.get("lon");
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      },
+    });
+  }
 
-  if (!lat || !lon) {
+  let body: { lat?: number; lon?: number } = {};
+  try {
+    body = await req.json();
+  } catch {
+    return new Response(
+      JSON.stringify({ error: "Invalid JSON body" }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  const lat = body.lat;
+  const lon = body.lon;
+
+  if (lat == null || lon == null) {
     return new Response(
       JSON.stringify({ error: "lat and lon are required" }),
       { status: 400, headers: { "Content-Type": "application/json" } }

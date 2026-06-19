@@ -216,7 +216,7 @@ export function App() {
     const ridePoints = points.map((p, i) => ({
       ride_id: rideId,
       point_index: i,
-      location: { lat: p.lat, lng: p.lng },
+      location: `POINT(${p.lng} ${p.lat})`,
       recorded_at: p.recorded_at,
       temperature: p.temperature,
       humidity: p.humidity,
@@ -235,11 +235,11 @@ export function App() {
 
     const routeCoords = routeRef.current as [number, number][]
     setTimelinePoints(
-      ridePoints.map((p) => ({
+      points.map((p) => ({
         id: '',
         ride_id: rideId,
-        point_index: p.point_index,
-        location: p.location,
+        point_index: 0,
+        location: { lat: p.lat, lng: p.lng },
         recorded_at: p.recorded_at,
         temperature: p.temperature,
         humidity: p.humidity,
