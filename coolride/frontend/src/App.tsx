@@ -46,6 +46,9 @@ export function App() {
   const [timelinePoints, setTimelinePoints] = useState<RidePoint[] | null>(null)
   const [timelineRoute, setTimelineRoute] = useState<[number, number][] | null>(null)
   const [tick, setTick] = useState(0)
+  const [isDark, setIsDark] = useState(
+    typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+  )
 
   const isTracking = rideState === 'recording'
   const { position, error: geoError } = useGeolocation(isTracking)
@@ -262,9 +265,11 @@ export function App() {
     if (root.classList.contains('dark')) {
       root.classList.remove('dark')
       localStorage.setItem('theme', 'light')
+      setIsDark(false)
     } else {
       root.classList.add('dark')
       localStorage.setItem('theme', 'dark')
+      setIsDark(true)
     }
   }, [])
 
@@ -323,9 +328,9 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950 text-gray-900 dark:text-zinc-100 flex flex-col">
-      <div className="flex-1 relative overflow-hidden">
+      <div className="flex-1 relative min-h-0">
         {activeTab === 'map' && !showTimeline && (
-          <div className="h-full relative">
+          <div className="absolute inset-0">
             <RideMap
               currentPosition={
                 position ? [position.lat, position.lng] : null
@@ -444,6 +449,7 @@ export function App() {
             ) : (
               <RideHistory
                 userId={userId}
+                isDark={isDark}
                 onToggleDarkMode={handleToggleDarkMode}
                 onLogout={handleLogout}
                 refreshKey={ridesRefreshKey}

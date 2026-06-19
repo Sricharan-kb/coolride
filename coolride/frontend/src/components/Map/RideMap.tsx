@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import { MapContainer, TileLayer, CircleMarker, Polyline, useMap } from 'react-leaflet'
-import 'leaflet/dist/leaflet.css'
 
 interface RideMapProps {
   currentPosition: [number, number] | null

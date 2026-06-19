@@ -10,10 +10,12 @@ export function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    setSuccess(false)
     setLoading(true)
     const { error: authError } = await supabase.auth.signUp({
       email,
@@ -21,8 +23,29 @@ export function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
     })
     if (authError) {
       setError(authError.message)
+    } else {
+      setSuccess(true)
     }
     setLoading(false)
+  }
+
+  if (success) {
+    return (
+      <div className="flex flex-col gap-4 w-full max-w-sm text-center">
+        <h1 className="text-xl font-medium text-emerald-600 dark:text-emerald-400">
+          Check your email
+        </h1>
+        <p className="text-sm text-gray-500 dark:text-zinc-400">
+          A confirmation link has been sent to <strong>{email}</strong>. After confirming, log in below.
+        </p>
+        <button
+          onClick={() => { setSuccess(false); onSwitchToLogin() }}
+          className="bg-emerald-600 dark:bg-emerald-400 text-white dark:text-zinc-950 py-2 px-4 text-base font-medium"
+        >
+          Go to login
+        </button>
+      </div>
+    )
   }
 
   return (
