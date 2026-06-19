@@ -1,2 +1,27 @@
+# Environment
 .env
+.env.*
+!.env.example
+
+# QGIS
 *.qgz
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+!.vscode/settings.json
+.idea/
+
+# Python (unused in this project, kept from upstream)
+__pycache__/
+*.py[codz]
