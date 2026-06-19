@@ -123,8 +123,7 @@ coolride/
 │       ├── migrations/
 │       │   └── 001_schema.sql    # rides, ride_points, ride_feedback + RLS + PostGIS
 │       └── functions/
-│           ├── _shared/          # cors.ts (shared CORS headers + json helper)
-│           └── weather/          # WeatherAPI.com proxy (Deno/TypeScript)
+│           └── weather/          # WeatherAPI.com proxy (Deno/TypeScript, self-contained)
 ├── SPEC.md                       # Full specification
 ├── frontend.md                   # Frontend coding instructions
 ├── backend.md                    # Backend coding instructions

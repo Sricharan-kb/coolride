@@ -1,12 +1,28 @@
-import { corsHeaders, json } from "../_shared/cors.ts";
-
-// WeatherAPI key is kept server-side via Supabase Edge Function secrets.
+// WeatherAPI.com proxy. POST-only — the SPA sends { lat, lon } as JSON.
+// The WeatherAPI key is kept server-side via Supabase Edge Function secrets.
+//
+// CORS is inlined (not in _shared/) because this is deployed via the Supabase
+// Dashboard editor, which is single-file and can't resolve a sibling import.
 const WEATHERAPI_KEY = Deno.env.get("WEATHERAPI_KEY");
 const WEATHERAPI_BASE = "https://api.weatherapi.com/v1/current.json";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers":
+    "Content-Type, Authorization, apikey, x-client-info, x-client-info-2",
+  "Access-Control-Max-Age": "86400",
+};
+
+function json(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 Deno.serve(async (req: Request) => {
-  // Explicit CORS preflight handler. Must return CORS headers so the browser
-  // allows the subsequent POST from the cross-origin SPA.
+  // CORS preflight — must return CORS headers so the browser allows the POST.
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
