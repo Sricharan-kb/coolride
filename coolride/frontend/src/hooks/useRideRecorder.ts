@@ -46,7 +46,7 @@ export function useRideRecorder({ userId }: UseRideRecorderArgs) {
   const [ridesRefreshKey, setRidesRefreshKey] = useState(0)
 
   const isTracking = rideState === 'recording'
-  const { position, error: geoError, accuracy, speed } = useGeolocation(isTracking)
+  const { position, error: geoError } = useGeolocation(isTracking)
   const { lux, acceleration } = useSensors(isTracking)
   const { weather, error: weatherError } = useWeather(
     isTracking && position ? position.lat : null,
@@ -78,20 +78,22 @@ export function useRideRecorder({ userId }: UseRideRecorderArgs) {
       distanceRef.current += segmentM
     }
 
-    // Speed: primary = GPS chip Doppler speed, fallback = distance/time with accuracy threshold
+    // Calculate speed from distance/time between consecutive points.
+    // Apply GPS accuracy threshold: if movement < 10m, treat as stationary (speed = 0).
     let speedKmh: number | null = null
-    if (speed !== null && speed >= 0) {
-      speedKmh = speed * 3.6
-    } else if (prevLength > 0 && segmentM > 0) {
-      const thresholdM = accuracy != null && accuracy > 0 ? accuracy : 5
-      if (segmentM >= thresholdM) {
-        const elapsedSec = (now - new Date(pointsRef.current[prevLength - 1].recorded_at).getTime()) / 1000
-        if (elapsedSec > 0) {
+    if (prevLength > 0) {
+      const thresholdM = 10  // 10m minimum movement to count as real motion
+      const elapsedSec = (now - new Date(pointsRef.current[prevLength - 1].recorded_at).getTime()) / 1000
+      if (elapsedSec > 0) {
+        if (segmentM < thresholdM) {
+          speedKmh = 0
+        } else {
           speedKmh = (segmentM / elapsedSec) * 3.6
         }
-      } else {
-        speedKmh = 0
       }
+    } else {
+      // First point: no speed yet
+      speedKmh = 0
     }
 
     const point: BufferedPoint = {
@@ -116,7 +118,7 @@ export function useRideRecorder({ userId }: UseRideRecorderArgs) {
     }
 
     setTick((t) => t + 1)
-  }, [position, isTracking, weather, lux, acceleration, speed, accuracy])
+  }, [position, isTracking, weather, lux, acceleration])
 
   // 1s UI refresh tick while recording (drives live stat updates).
   useEffect(() => {
@@ -293,11 +295,12 @@ export function useRideRecorder({ userId }: UseRideRecorderArgs) {
         : 0
 
   const distanceKm = distanceRef.current / 1000
-  // Instantaneous GPS speed (m/s → km/h), fallback to 0
-  const currentSpeed = speed !== null && speed >= 0 ? speed * 3.6 : 0
 
   const lastPoint =
     pointsRef.current.length > 0 ? pointsRef.current[pointsRef.current.length - 1] : null
+
+  // Live speed: use last captured point's calculated speed (0 when stationary)
+  const currentSpeed = lastPoint?.speed_kmh ?? 0
 
   return {
     rideState,

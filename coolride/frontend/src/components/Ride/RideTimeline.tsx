@@ -14,11 +14,12 @@ export function RideTimeline({ points, route }: RideTimelineProps) {
   const scrubPosition: [number, number] | null = current
     ? [current.location.lat, current.location.lng]
     : null
-  const percentage = total > 0 ? Math.round((index / (total - 1)) * 100) : 0
+  const percentage = total > 1 ? Math.round((index / (total - 1)) * 100) : 0
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 min-h-0">
+    <div className="relative w-full h-full">
+      {/* Full-screen map */}
+      <div className="absolute inset-0">
         <RideMap
           currentPosition={null}
           route={route}
@@ -27,7 +28,9 @@ export function RideTimeline({ points, route }: RideTimelineProps) {
         />
       </div>
 
-      <div className="flex-shrink-0 px-4 py-3 bg-white dark:bg-zinc-950 border-t border-gray-200 dark:border-zinc-800">
+      {/* Fixed bottom sheet overlay */}
+      <div className="absolute bottom-0 left-0 right-0 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm border-t border-gray-200 dark:border-zinc-700 px-4 py-3 z-[1000]">
+        {/* Slider */}
         <div className="flex justify-between text-xs text-gray-500 dark:text-zinc-400 mb-2">
           <span>Start</span>
           <span>{percentage}%</span>
@@ -36,14 +39,15 @@ export function RideTimeline({ points, route }: RideTimelineProps) {
         <input
           type="range"
           min={0}
-          max={total - 1}
+          max={Math.max(total - 1, 0)}
           value={index}
           onChange={(e) => setIndex(Number(e.target.value))}
-          className="w-full h-1 appearance-none bg-gray-200 dark:bg-zinc-800 accent-emerald-600 dark:accent-emerald-400 mb-3"
+          className="w-full h-1 appearance-none bg-gray-200 dark:bg-zinc-800 accent-emerald-600 dark:accent-emerald-400"
         />
 
+        {/* Point details */}
         {current && (
-          <div className="space-y-1">
+          <div className="mt-2 space-y-1">
             <div className="flex justify-between text-sm text-gray-900 dark:text-zinc-100">
               <span>Point {index + 1}/{total}</span>
               <span>
