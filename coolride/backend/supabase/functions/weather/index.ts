@@ -10,7 +10,7 @@ const corsHeaders = {
 };
 
 serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
+  if (req.method !== "POST") {
     return new Response(null, { status: 204, headers: corsHeaders });
   }
 
@@ -24,7 +24,8 @@ serve(async (req: Request) => {
     });
   }
 
-  const { lat, lon } = body;
+  const lat = body.lat;
+  const lon = body.lon;
 
   if (lat == null || lon == null) {
     return new Response(JSON.stringify({ error: "lat and lon are required" }), {

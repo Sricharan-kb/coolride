@@ -375,9 +375,13 @@ export function App() {
           </div>
         )}
 
-        {activeTab === 'ride' && !showTimeline && (
+        {activeTab === 'ride' && (
           <div className="h-full overflow-y-auto p-4">
-            {rideState !== 'idle' ? (
+            {showTimeline && timelinePoints && timelineRoute ? (
+              <div className="h-full">
+                <RideTimeline points={timelinePoints} route={timelineRoute} />
+              </div>
+            ) : rideState !== 'idle' ? (
               <div>
                 <h2 className="text-lg font-medium text-gray-900 dark:text-zinc-100 mb-4">
                   Current Ride
@@ -411,10 +415,6 @@ export function App() {
                     onStop={handleStop}
                   />
                 </div>
-              </div>
-            ) : showTimeline && timelinePoints && timelineRoute ? (
-              <div className="h-full">
-                <RideTimeline points={timelinePoints} route={timelineRoute} />
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-sm text-gray-500 dark:text-zinc-400 gap-3">
