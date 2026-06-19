@@ -1,15 +1,16 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { corsHeaders, json } from "../_shared/cors.ts";
 
+// WeatherAPI key is kept server-side via Supabase Edge Function secrets.
 const WEATHERAPI_KEY = Deno.env.get("WEATHERAPI_KEY");
 const WEATHERAPI_BASE = "https://api.weatherapi.com/v1/current.json";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, apikey, x-client-info",
-};
+Deno.serve(async (req: Request) => {
+  // Explicit CORS preflight handler. Must return CORS headers so the browser
+  // allows the subsequent POST from the cross-origin SPA.
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
 
-serve(async (req: Request) => {
   if (req.method !== "POST") {
     return new Response(null, { status: 204, headers: corsHeaders });
   }
@@ -18,20 +19,14 @@ serve(async (req: Request) => {
   try {
     body = await req.json();
   } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ error: "Invalid JSON body" }, 400);
   }
 
   const lat = body.lat;
   const lon = body.lon;
 
   if (lat == null || lon == null) {
-    return new Response(JSON.stringify({ error: "lat and lon are required" }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ error: "lat and lon are required" }, 400);
   }
 
   const apiUrl = `${WEATHERAPI_BASE}?key=${WEATHERAPI_KEY}&q=${lat},${lon}&aqi=no`;
@@ -43,10 +38,7 @@ serve(async (req: Request) => {
     response = await fetch(apiUrl);
     data = (await response.json()) as Record<string, unknown>;
   } catch {
-    return new Response(JSON.stringify({ error: "Failed to fetch weather data" }), {
-      status: 502,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ error: "Failed to fetch weather data" }, 502);
   }
 
   if (!response.ok) {
@@ -54,18 +46,12 @@ serve(async (req: Request) => {
       typeof data?.error === "object" && data.error !== null && "message" in data.error
         ? String((data.error as Record<string, unknown>).message)
         : "Weather fetch failed";
-    return new Response(JSON.stringify({ error: msg }), {
-      status: response.status,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ error: msg }, response.status);
   }
 
   const current = data?.current as Record<string, unknown> | undefined;
   if (!current) {
-    return new Response(JSON.stringify({ error: "Unexpected weather API response" }), {
-      status: 502,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ error: "Unexpected weather API response" }, 502);
   }
 
   const result = {
@@ -76,7 +62,5 @@ serve(async (req: Request) => {
     icon: "https:" + String(((current.condition as Record<string, unknown>)?.icon) || ""),
   };
 
-  return new Response(JSON.stringify(result), {
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
+  return json(result);
 });

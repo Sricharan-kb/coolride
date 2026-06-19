@@ -4,6 +4,7 @@ interface WeatherWidgetProps {
   feelsLike: number | null
   description: string | null
   icon: string | null
+  error?: string | null
 }
 
 export function WeatherWidget({
@@ -12,11 +13,12 @@ export function WeatherWidget({
   feelsLike,
   description,
   icon,
+  error,
 }: WeatherWidgetProps) {
   if (temperature === null && humidity === null) {
     return (
       <div className="bg-white/90 dark:bg-zinc-900/90 px-3 py-2 text-sm text-gray-500 dark:text-zinc-400">
-        Weather unavailable
+        {error ?? 'Weather unavailable'}
       </div>
     )
   }

@@ -61,9 +61,11 @@ Or deploy manually from the Supabase Dashboard:
 
 ### 4. Verify
 
-Test the weather function:
-```
-GET https://<project-ref>.supabase.co/functions/v1/weather?lat=13.0827&lon=80.2707
+Test the weather function (**POST-only**, JSON body):
+```bash
+curl -X POST "https://<project-ref>.supabase.co/functions/v1/weather" \
+  -H "Content-Type: application/json" \
+  -d '{"lat":13.0827,"lon":80.2707}'
 ```
 
 Expected response:

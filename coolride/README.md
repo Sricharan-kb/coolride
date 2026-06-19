@@ -58,8 +58,12 @@ npm run dev                   # http://localhost:5173
 
 ### 3. Verify
 
-```
-curl "https://<project-ref>.supabase.co/functions/v1/weather?lat=13.0827&lon=80.2707"
+The weather function is **POST-only** (the SPA sends `{ lat, lon }` as JSON). Test it:
+
+```bash
+curl -X POST "https://<project-ref>.supabase.co/functions/v1/weather" \
+  -H "Content-Type: application/json" \
+  -d '{"lat":13.0827,"lon":80.2707}'
 ```
 
 ---
@@ -101,16 +105,16 @@ Supabase is cloud-hosted. Once the schema is run, the edge function is deployed,
 
 ```
 coolride/
-├── frontend/                     # React 18 + Vite + TypeScript + TailwindCSS
+├── frontend/                     # React 19 + Vite + TypeScript + TailwindCSS
 │   ├── src/
-│   │   ├── App.tsx               # Auth gating, tabs, ride state machine, dark mode
+│   │   ├── App.tsx               # Auth gating, tabs, dark mode; wires useRideRecorder
 │   │   ├── components/
 │   │   │   ├── Auth/             # LoginForm, RegisterForm
 │   │   │   ├── Map/              # RideMap (Leaflet + OSM tiles)
 │   │   │   ├── Ride/             # RideControls, LiveStats, RideFeedbackModal, RideTimeline
 │   │   │   ├── Weather/          # WeatherWidget (floating, live updates)
-│   │   │   └── Profile/          # RideHistory (list + detail view)
-│   │   ├── hooks/                # useGeolocation, useSensors, useWeather
+│   │   │   └── Profile/          # RideHistory, UserProfile
+│   │   ├── hooks/                # useRideRecorder, useGeolocation, useSensors, useWeather
 │   │   ├── lib/                  # supabase.ts, geo.ts
 │   │   └── types/                # Ride, RidePoint, RideFeedback, WeatherData
 │   └── .env.example
@@ -119,6 +123,7 @@ coolride/
 │       ├── migrations/
 │       │   └── 001_schema.sql    # rides, ride_points, ride_feedback + RLS + PostGIS
 │       └── functions/
+│           ├── _shared/          # cors.ts (shared CORS headers + json helper)
 │           └── weather/          # WeatherAPI.com proxy (Deno/TypeScript)
 ├── SPEC.md                       # Full specification
 ├── frontend.md                   # Frontend coding instructions
@@ -133,7 +138,7 @@ coolride/
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | React 18, Vite, TypeScript, TailwindCSS 3 |
+| Frontend | React 19, Vite, TypeScript, TailwindCSS 3 |
 | Maps | Leaflet + OpenStreetMap (free, no API key) |
 | Backend | Supabase (PostgreSQL 15, PostGIS, Auth) |
 | Serverless | Supabase Edge Functions (TypeScript/Deno) |
