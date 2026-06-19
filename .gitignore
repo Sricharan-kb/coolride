@@ -19,7 +19,6 @@ Thumbs.db
 
 # IDE
 .vscode/
-!.vscode/settings.json
 .idea/
 
 # Python (unused in this project, kept from upstream)

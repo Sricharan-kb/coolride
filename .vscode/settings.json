@@ -1,5 +1,0 @@
-{
-  "deno.enable": false,
-  "deno.enablePaths": ["coolride/backend/supabase/functions"],
-  "deno.unstable": []
-}
