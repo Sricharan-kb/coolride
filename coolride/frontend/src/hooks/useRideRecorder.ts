@@ -124,6 +124,9 @@ export function useRideRecorder({ userId }: UseRideRecorderArgs) {
     pauseStartRef.current = null
     lastCaptureRef.current = 0
     lastWeatherRef.current = null
+    setShowTimeline(false)
+    setTimelinePoints(null)
+    setTimelineRoute(null)
     setFeedbackRideId(data.id)
     setFeedbackStartedAt(data.started_at)
     setRideState('recording')

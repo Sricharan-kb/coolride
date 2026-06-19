@@ -3,6 +3,37 @@ import type { Ride, RidePoint } from '../../types/index'
 import { supabase } from '../../lib/supabase'
 import { RideTimeline } from '../Ride/RideTimeline'
 
+// Supabase PostGIS returns location as GeoJSON: { type: "Point", coordinates: [lng, lat] }
+// Convert to frontend format: { lat, lng }
+interface GeoJSONPoint {
+  type: 'Point'
+  coordinates: [number, number]
+}
+
+function parseLocation(raw: unknown): { lat: number; lng: number } | null {
+  const geo = raw as GeoJSONPoint | undefined
+  if (
+    geo &&
+    geo.type === 'Point' &&
+    Array.isArray(geo.coordinates) &&
+    geo.coordinates.length === 2 &&
+    typeof geo.coordinates[0] === 'number' &&
+    typeof geo.coordinates[1] === 'number'
+  ) {
+    return { lat: geo.coordinates[1], lng: geo.coordinates[0] }
+  }
+  // Fallback: try direct lat/lng if already in that format
+  const direct = raw as { lat?: number; lng?: number } | undefined
+  if (
+    direct &&
+    typeof direct.lat === 'number' &&
+    typeof direct.lng === 'number'
+  ) {
+    return { lat: direct.lat, lng: direct.lng }
+  }
+  return null
+}
+
 interface RideHistoryProps {
   userId: string
   refreshKey: number
@@ -104,14 +135,34 @@ export function RideHistory({
         return
       }
       if (data) {
-        setSelectedPoints(
-          data.filter(
-            (p): p is RidePoint =>
-              typeof p.ride_id === 'string' &&
-              typeof p.point_index === 'number' &&
-              p.location != null
-          )
-        )
+        const transformed: RidePoint[] = data
+          .map((p): RidePoint | null => {
+            const loc = parseLocation(p.location)
+            if (
+              !loc ||
+              typeof p.ride_id !== 'string' ||
+              typeof p.point_index !== 'number' ||
+              typeof p.recorded_at !== 'string'
+            ) {
+              return null
+            }
+            return {
+              id: String(p.id ?? ''),
+              ride_id: p.ride_id,
+              point_index: p.point_index,
+              location: loc,
+              recorded_at: p.recorded_at,
+              temperature: typeof p.temperature === 'number' ? p.temperature : null,
+              humidity: typeof p.humidity === 'number' ? p.humidity : null,
+              lux: typeof p.lux === 'number' ? p.lux : null,
+              accel_x: typeof p.accel_x === 'number' ? p.accel_x : null,
+              accel_y: typeof p.accel_y === 'number' ? p.accel_y : null,
+              accel_z: typeof p.accel_z === 'number' ? p.accel_z : null,
+            }
+          })
+          .filter((p): p is RidePoint => p !== null)
+
+        setSelectedPoints(transformed)
       }
     } catch {
       setSelectedPoints([])
@@ -127,10 +178,9 @@ export function RideHistory({
 
   if (selectedRideId && selectedPoints) {
     const ride = rides.find((r) => r.id === selectedRideId)
-    const routeCoords: [number, number][] = selectedPoints.map((p) => [
-      p.location.lat,
-      p.location.lng,
-    ])
+    const routeCoords: [number, number][] = selectedPoints
+      .map((p) => [p.location.lat, p.location.lng] as [number, number])
+      .filter(([lat, lng]) => typeof lat === 'number' && typeof lng === 'number')
 
     return (
       <div className="flex flex-col h-full">

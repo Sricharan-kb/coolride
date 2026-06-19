@@ -121,7 +121,7 @@ export function App() {
                 currentSpeed={recorder.currentSpeed}
                 lastTemp={recorder.lastPoint?.temperature ?? null}
                 lastHumidity={recorder.lastPoint?.humidity ?? null}
-                lastLux={recorder.lastPoint?.lux ?? null}
+                lastLux={null}
                 isVisible={recorder.rideState !== 'idle'}
               />
             </div>
@@ -145,8 +145,22 @@ export function App() {
         {activeTab === 'ride' && (
           <div className="h-full overflow-y-auto p-4">
             {recorder.showTimeline && recorder.timelinePoints && recorder.timelineRoute ? (
-              <div className="h-full">
-                <RideTimeline points={recorder.timelinePoints} route={recorder.timelineRoute} />
+              <div className="h-full flex flex-col">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-zinc-800">
+                  <button
+                    onClick={recorder.closeTimeline}
+                    className="text-sm text-gray-500 dark:text-zinc-400 underline"
+                  >
+                    Close
+                  </button>
+                  <span className="text-sm font-medium text-gray-900 dark:text-zinc-100">
+                    Ride Summary
+                  </span>
+                  <span className="w-10" />
+                </div>
+                <div className="flex-1">
+                  <RideTimeline points={recorder.timelinePoints} route={recorder.timelineRoute} />
+                </div>
               </div>
             ) : recorder.rideState !== 'idle' ? (
               <div>
@@ -159,20 +173,18 @@ export function App() {
                   currentSpeed={recorder.currentSpeed}
                   lastTemp={recorder.lastPoint?.temperature ?? null}
                   lastHumidity={recorder.lastPoint?.humidity ?? null}
-                  lastLux={recorder.lastPoint?.lux ?? null}
+                  lastLux={null}
                   isVisible
                 />
-                {recorder.lux != null && (
-                  <div className="mt-3 text-sm text-gray-500 dark:text-zinc-400">
-                    Light: {recorder.lux.toFixed(0)} lux
-                  </div>
-                )}
-                {recorder.acceleration && (
-                  <div className="mt-1 text-sm text-gray-500 dark:text-zinc-400">
-                    Accel: {recorder.acceleration.x?.toFixed(1) ?? '—'},{' '}
-                    {recorder.acceleration.y?.toFixed(1) ?? '—'}, {recorder.acceleration.z?.toFixed(1) ?? '—'} m/s²
-                  </div>
-                )}
+                <div className="mt-3 text-sm">
+                  {recorder.geoError ? (
+                    <span className="text-red-600 dark:text-red-400">GPS Error: {recorder.geoError}</span>
+                  ) : recorder.position ? (
+                    <span className="text-emerald-600 dark:text-emerald-400">GPS Locked</span>
+                  ) : (
+                    <span className="text-gray-500 dark:text-zinc-400">GPS Searching...</span>
+                  )}
+                </div>
                 <div className="mt-6 flex justify-center">
                   <RideControls
                     rideState={recorder.rideState}
@@ -199,17 +211,7 @@ export function App() {
 
         {activeTab === 'profile' && (
           <div className="h-full overflow-y-auto">
-            {recorder.showTimeline && recorder.timelinePoints && recorder.timelineRoute ? (
-              <div className="h-full">
-                <button
-                  onClick={recorder.closeTimeline}
-                  className="px-4 py-2 text-sm text-gray-500 dark:text-zinc-400 underline"
-                >
-                  Back to history
-                </button>
-                <RideTimeline points={recorder.timelinePoints} route={recorder.timelineRoute} />
-              </div>
-            ) : showRideHistory ? (
+            {showRideHistory ? (
               <RideHistory
                 userId={userId}
                 refreshKey={recorder.ridesRefreshKey}
