@@ -4,7 +4,6 @@ interface GeolocationState {
   position: { lat: number; lng: number } | null
   error: string | null
   accuracy: number | null
-  speed: number | null  // m/s from GPS chip, null if unavailable
 }
 
 interface UseGeolocationReturn extends GeolocationState {
@@ -15,7 +14,6 @@ export function useGeolocation(isTracking: boolean): UseGeolocationReturn {
   const [position, setPosition] = useState<{ lat: number; lng: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [accuracy, setAccuracy] = useState<number | null>(null)
-  const [speed, setSpeed] = useState<number | null>(null)
   const watchIdRef = useRef<number | null>(null)
 
   const handlePosition = useCallback((pos: GeolocationPosition) => {
@@ -24,7 +22,6 @@ export function useGeolocation(isTracking: boolean): UseGeolocationReturn {
       lng: pos.coords.longitude,
     })
     setAccuracy(pos.coords.accuracy)
-    setSpeed(pos.coords.speed)
     setError(null)
   }, [])
 
@@ -63,5 +60,5 @@ export function useGeolocation(isTracking: boolean): UseGeolocationReturn {
     }
   }, [isTracking, handlePosition, handleError])
 
-  return { position, error, accuracy, speed, isTracking }
+  return { position, error, accuracy, isTracking }
 }

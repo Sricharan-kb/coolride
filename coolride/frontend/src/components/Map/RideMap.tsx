@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
-import { MapContainer, TileLayer, CircleMarker, Polyline, Marker, useMap } from 'react-leaflet'
+import { useState, useEffect, useRef } from 'react'
+import { MapContainer, TileLayer, CircleMarker, Polyline, useMap } from 'react-leaflet'
 import * as L from 'leaflet'
 
 interface RideMapProps {
@@ -58,10 +58,8 @@ function RouteBounds({ route }: { route: [number, number][] }) {
     )
 
     if (validRoute.length > 1 && validRoute.length !== prevLengthRef.current) {
-      map.whenReady(() => {
-        const bounds = L.latLngBounds(validRoute.map(([lat, lng]) => [lat, lng]))
-        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 18 })
-      })
+      const bounds = L.latLngBounds(validRoute.map(([lat, lng]) => [lat, lng]))
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 18 })
       prevLengthRef.current = validRoute.length
     }
   }, [route, map])
@@ -84,19 +82,6 @@ function DarkModeTileLayer({ isDark }: { isDark: boolean }) {
   )
 }
 
-function PinIcon({ color }: { color: string }) {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${color}" width="28" height="28">
-    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-  </svg>`
-  return L.divIcon({
-    html: svg,
-    className: '',
-    iconSize: [28, 28],
-    iconAnchor: [14, 28],
-    popupAnchor: [0, -28],
-  })
-}
-
 export function RideMap({
   currentPosition,
   route,
@@ -114,8 +99,6 @@ export function RideMap({
       typeof lng === 'number' &&
       !isNaN(lng)
   )
-
-  const pinIcon = useMemo(() => PinIcon({ color: scrubColor }), [scrubColor])
 
   return (
     <MapContainer
@@ -147,9 +130,14 @@ export function RideMap({
         />
       )}
       {scrubPosition && (
-        <Marker
-          position={scrubPosition}
-          icon={pinIcon}
+        <CircleMarker
+          center={scrubPosition}
+          radius={7}
+          pathOptions={{
+            color: scrubColor,
+            fillColor: scrubColor,
+            fillOpacity: 0.9,
+          }}
         />
       )}
     </MapContainer>

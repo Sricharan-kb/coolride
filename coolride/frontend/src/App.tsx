@@ -143,10 +143,10 @@ export function App() {
         )}
 
         {activeTab === 'ride' && (
-          <div className="h-full relative">
+          <div className="h-full overflow-y-auto p-4">
             {recorder.showTimeline && recorder.timelinePoints && recorder.timelineRoute ? (
               <div className="h-full flex flex-col">
-                <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 z-[1001]">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-zinc-800">
                   <button
                     onClick={recorder.closeTimeline}
                     className="text-sm text-gray-500 dark:text-zinc-400 underline"
@@ -158,7 +158,7 @@ export function App() {
                   </span>
                   <span className="w-10" />
                 </div>
-                <div className="flex-1 min-h-0 relative">
+                <div className="flex-1">
                   <RideTimeline points={recorder.timelinePoints} route={recorder.timelineRoute} />
                 </div>
               </div>

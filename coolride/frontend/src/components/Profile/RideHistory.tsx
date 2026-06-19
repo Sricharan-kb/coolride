@@ -154,8 +154,6 @@ export function RideHistory({
               recorded_at: p.recorded_at,
               temperature: typeof p.temperature === 'number' ? p.temperature : null,
               humidity: typeof p.humidity === 'number' ? p.humidity : null,
-              feels_like: typeof p.feels_like === 'number' ? p.feels_like : null,
-              speed_kmh: typeof p.speed_kmh === 'number' ? p.speed_kmh : null,
               lux: typeof p.lux === 'number' ? p.lux : null,
               accel_x: typeof p.accel_x === 'number' ? p.accel_x : null,
               accel_y: typeof p.accel_y === 'number' ? p.accel_y : null,
