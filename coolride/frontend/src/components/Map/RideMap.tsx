@@ -58,8 +58,10 @@ function RouteBounds({ route }: { route: [number, number][] }) {
     )
 
     if (validRoute.length > 1 && validRoute.length !== prevLengthRef.current) {
-      const bounds = L.latLngBounds(validRoute.map(([lat, lng]) => [lat, lng]))
-      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 18 })
+      map.whenReady(() => {
+        const bounds = L.latLngBounds(validRoute.map(([lat, lng]) => [lat, lng]))
+        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 18 })
+      })
       prevLengthRef.current = validRoute.length
     }
   }, [route, map])

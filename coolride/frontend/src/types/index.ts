@@ -18,6 +18,8 @@ export interface RidePoint {
   recorded_at: string
   temperature: number | null
   humidity: number | null
+  feels_like: number | null
+  speed_kmh: number | null
   lux: number | null
   accel_x: number | null
   accel_y: number | null

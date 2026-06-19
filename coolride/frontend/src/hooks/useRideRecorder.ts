@@ -14,6 +14,8 @@ interface BufferedPoint {
   recorded_at: string
   temperature: number | null
   humidity: number | null
+  feels_like: number | null
+  speed_kmh: number | null
   lux: number | null
   accel_x: number | null
   accel_y: number | null
@@ -44,7 +46,7 @@ export function useRideRecorder({ userId }: UseRideRecorderArgs) {
   const [ridesRefreshKey, setRidesRefreshKey] = useState(0)
 
   const isTracking = rideState === 'recording'
-  const { position, error: geoError } = useGeolocation(isTracking)
+  const { position, error: geoError, accuracy, speed } = useGeolocation(isTracking)
   const { lux, acceleration } = useSensors(isTracking)
   const { weather, error: weatherError } = useWeather(
     isTracking && position ? position.lat : null,
@@ -69,9 +71,27 @@ export function useRideRecorder({ userId }: UseRideRecorderArgs) {
     lastCaptureRef.current = now
 
     const prevLength = pointsRef.current.length
+    let segmentM = 0
     if (prevLength > 0) {
       const prev = pointsRef.current[prevLength - 1]
-      distanceRef.current += haversineDistance(prev.lat, prev.lng, position.lat, position.lng)
+      segmentM = haversineDistance(prev.lat, prev.lng, position.lat, position.lng)
+      distanceRef.current += segmentM
+    }
+
+    // Speed: primary = GPS chip Doppler speed, fallback = distance/time with accuracy threshold
+    let speedKmh: number | null = null
+    if (speed !== null && speed >= 0) {
+      speedKmh = speed * 3.6
+    } else if (prevLength > 0 && segmentM > 0) {
+      const thresholdM = accuracy != null && accuracy > 0 ? accuracy : 5
+      if (segmentM >= thresholdM) {
+        const elapsedSec = (now - new Date(pointsRef.current[prevLength - 1].recorded_at).getTime()) / 1000
+        if (elapsedSec > 0) {
+          speedKmh = (segmentM / elapsedSec) * 3.6
+        }
+      } else {
+        speedKmh = 0
+      }
     }
 
     const point: BufferedPoint = {
@@ -80,6 +100,8 @@ export function useRideRecorder({ userId }: UseRideRecorderArgs) {
       recorded_at: new Date().toISOString(),
       temperature: weather?.temperature ?? null,
       humidity: weather?.humidity ?? null,
+      feels_like: weather?.feels_like ?? null,
+      speed_kmh: speedKmh,
       lux,
       accel_x: acceleration?.x ?? null,
       accel_y: acceleration?.y ?? null,
@@ -94,7 +116,7 @@ export function useRideRecorder({ userId }: UseRideRecorderArgs) {
     }
 
     setTick((t) => t + 1)
-  }, [position, isTracking, weather, lux, acceleration])
+  }, [position, isTracking, weather, lux, acceleration, speed, accuracy])
 
   // 1s UI refresh tick while recording (drives live stat updates).
   useEffect(() => {
@@ -198,6 +220,8 @@ export function useRideRecorder({ userId }: UseRideRecorderArgs) {
       recorded_at: p.recorded_at,
       temperature: p.temperature,
       humidity: p.humidity,
+      feels_like: p.feels_like,
+      speed_kmh: p.speed_kmh,
       lux: p.lux,
       accel_x: p.accel_x,
       accel_y: p.accel_y,
@@ -221,6 +245,8 @@ export function useRideRecorder({ userId }: UseRideRecorderArgs) {
         recorded_at: p.recorded_at,
         temperature: p.temperature,
         humidity: p.humidity,
+        feels_like: p.feels_like,
+        speed_kmh: p.speed_kmh,
         lux: p.lux,
         accel_x: p.accel_x,
         accel_y: p.accel_y,
@@ -267,7 +293,8 @@ export function useRideRecorder({ userId }: UseRideRecorderArgs) {
         : 0
 
   const distanceKm = distanceRef.current / 1000
-  const currentSpeed = durationSeconds > 0 ? (distanceRef.current / durationSeconds) * 3.6 : 0
+  // Instantaneous GPS speed (m/s → km/h), fallback to 0
+  const currentSpeed = speed !== null && speed >= 0 ? speed * 3.6 : 0
 
   const lastPoint =
     pointsRef.current.length > 0 ? pointsRef.current[pointsRef.current.length - 1] : null

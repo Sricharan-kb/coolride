@@ -18,7 +18,7 @@ export function RideTimeline({ points, route }: RideTimelineProps) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="h-48 flex-shrink-0">
+      <div className="flex-1 min-h-0">
         <RideMap
           currentPosition={null}
           route={route}
@@ -27,8 +27,8 @@ export function RideTimeline({ points, route }: RideTimelineProps) {
         />
       </div>
 
-      <div className="px-4 py-3">
-        <div className="flex justify-between text-xs text-gray-500 dark:text-zinc-400 mb-1">
+      <div className="flex-shrink-0 px-4 py-3 bg-white dark:bg-zinc-950 border-t border-gray-200 dark:border-zinc-800">
+        <div className="flex justify-between text-xs text-gray-500 dark:text-zinc-400 mb-2">
           <span>Start</span>
           <span>{percentage}%</span>
           <span>End</span>
@@ -39,35 +39,37 @@ export function RideTimeline({ points, route }: RideTimelineProps) {
           max={total - 1}
           value={index}
           onChange={(e) => setIndex(Number(e.target.value))}
-          className="w-full h-1 appearance-none bg-gray-200 dark:bg-zinc-800 accent-emerald-600 dark:accent-emerald-400"
+          className="w-full h-1 appearance-none bg-gray-200 dark:bg-zinc-800 accent-emerald-600 dark:accent-emerald-400 mb-3"
         />
-      </div>
 
-      {current && (
-        <div className="px-4 py-3 border-t border-gray-200 dark:border-zinc-800">
-          <div className="flex justify-between text-sm text-gray-900 dark:text-zinc-100 mb-1">
-            <span>
-              Point {index + 1}/{total}
-            </span>
-            <span>
-              {new Date(current.recorded_at).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </span>
+        {current && (
+          <div className="space-y-1">
+            <div className="flex justify-between text-sm text-gray-900 dark:text-zinc-100">
+              <span>Point {index + 1}/{total}</span>
+              <span>
+                {new Date(current.recorded_at).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </span>
+            </div>
+            <div className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">
+              {current.speed_kmh != null
+                ? `${current.speed_kmh.toFixed(1)} km/h`
+                : '— km/h'}
+            </div>
+            <div className="text-sm text-gray-500 dark:text-zinc-400">
+              {current.temperature != null && `${current.temperature.toFixed(0)}°C`}
+              {current.feels_like != null && ` · Feels ${current.feels_like.toFixed(0)}°C`}
+              {current.humidity != null && ` · ${current.humidity}%`}
+            </div>
+            <div className="text-xs text-gray-500 dark:text-zinc-400">
+              {current.location?.lat?.toFixed(4) ?? '—'}°N,{' '}
+              {current.location?.lng?.toFixed(4) ?? '—'}°E
+            </div>
           </div>
-          <div className="text-sm text-gray-500 dark:text-zinc-400">
-            {current.temperature != null &&
-              `${current.temperature.toFixed(0)}°C`}
-            {current.humidity != null && `  ·  ${current.humidity}%`}
-            {current.lux != null && `  ·  ${current.lux.toFixed(0)} lux`}
-          </div>
-          <div className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
-            {current.location?.lat?.toFixed(4) ?? '—'}°N,{' '}
-            {current.location?.lng?.toFixed(4) ?? '—'}°E
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
