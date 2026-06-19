@@ -8,12 +8,13 @@ const WEATHERAPI_BASE = "https://api.weatherapi.com/v1/current.json";
 // Deno provides a global `serve` function in the runtime.
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
+    const reqHeaders = req.headers.get("Access-Control-Request-Headers");
     return new Response(null, {
       status: 204,
       headers: {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Access-Control-Allow-Headers": reqHeaders || "Content-Type, Authorization, apikey, x-client-info",
       },
     });
   }
