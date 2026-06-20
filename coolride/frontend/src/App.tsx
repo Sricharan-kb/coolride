@@ -69,7 +69,8 @@ export function App() {
 
   const handleViewDetails = useCallback(() => {
     setShowSummary(false)
-  }, [])
+    recorder.viewTimeline()
+  }, [recorder])
 
   const handleCloseSummary = useCallback(() => {
     setShowSummary(false)
@@ -108,11 +109,6 @@ export function App() {
     setActiveTab('profile')
     setProfileView('rides')
   }, [])
-
-  const avgSpeedKmh =
-    recorder.durationSeconds > 0
-      ? (recorder.distanceKm / (recorder.durationSeconds / 3600))
-      : 0
 
   if (authLoading) {
     return (
@@ -214,9 +210,9 @@ export function App() {
                 {/* Post-ride summary card */}
                 {showSummary && (
                   <RideSummaryCard
-                    distanceKm={recorder.distanceKm}
-                    durationSec={recorder.durationSeconds}
-                    avgSpeedKmh={avgSpeedKmh}
+                    distanceKm={recorder.lastRideDistanceKm}
+                    durationSec={recorder.lastRideDurationSec}
+                    avgSpeedKmh={recorder.lastRideAvgSpeed}
                     weatherSnapshot={recorder.weather}
                     onViewDetails={handleViewDetails}
                     onClose={handleCloseSummary}

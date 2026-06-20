@@ -107,6 +107,7 @@ export function RideHistory({
 }: RideHistoryProps) {
   const [rides, setRides] = useState<Ride[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -115,6 +116,7 @@ export function RideHistory({
 
     const fetchRides = async () => {
       try {
+        setError(null)
         const { data, error } = await supabase
           .from('rides')
           .select('*')
@@ -122,7 +124,10 @@ export function RideHistory({
           .order('started_at', { ascending: false })
 
         if (cancelled) return
-        if (!error && data) {
+        if (error) {
+          setError('Failed to load rides: ' + error.message)
+          setRides([])
+        } else if (data) {
           setRides(
             data.filter(
               (r): r is Ride =>
@@ -133,7 +138,8 @@ export function RideHistory({
           )
         }
       } catch (err) {
-        console.error('Failed to fetch rides:', err)
+        const msg = err instanceof Error ? err.message : String(err)
+        setError('Failed to load rides: ' + msg)
         if (!cancelled) setRides([])
       } finally {
         if (!cancelled) setLoading(false)
@@ -146,18 +152,30 @@ export function RideHistory({
 
   const handleSelectRide = async (rideId: string) => {
     try {
+      setError(null)
       const { data, error } = await supabase
         .from('ride_points')
         .select('*, location:st_asgeojson(location)')
         .eq('ride_id', rideId)
         .order('point_index', { ascending: true })
 
-      if (error || !data) return
+      if (error) {
+        setError('Failed to load ride points: ' + error.message)
+        return
+      }
+      if (!data || data.length === 0) {
+        setError('No GPS points found for this ride.')
+        return
+      }
+
+      // Debug: log first raw location
+      console.log('Raw location sample:', data[0]?.location)
 
       const transformed: RidePoint[] = data
         .map((p): RidePoint | null => {
           const loc = parseLocation(p.location)
           if (!loc || typeof p.ride_id !== 'string' || typeof p.point_index !== 'number' || typeof p.recorded_at !== 'string') {
+            console.warn('Failed to parse point:', p.point_index, 'location:', p.location)
             return null
           }
           return {
@@ -178,13 +196,22 @@ export function RideHistory({
         })
         .filter((p): p is RidePoint => p !== null)
 
+      console.log('Transformed points:', transformed.length, 'of', data.length)
+
+      if (transformed.length === 0) {
+        setError('Could not parse GPS points. Check console for details.')
+        return
+      }
+
       const routeCoords: [number, number][] = transformed
         .map((p) => [p.location.lat, p.location.lng] as [number, number])
         .filter(([lat, lng]) => typeof lat === 'number' && typeof lng === 'number')
 
       onSelectRide(rideId, transformed, routeCoords)
     } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
       console.error('Failed to load ride points:', err)
+      setError('Failed to load ride points: ' + msg)
     }
   }
 
@@ -216,6 +243,18 @@ export function RideHistory({
 
       {/* List */}
       <div className="flex-1 overflow-y-auto p-4">
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+            <button
+              onClick={() => setError(null)}
+              className="text-xs text-red-500 dark:text-red-400 underline mt-1"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
         {loading && (
           <div className="flex items-center justify-center h-32">
             <div className="w-6 h-6 border-2 border-emerald-600 dark:border-emerald-400 border-t-transparent rounded-full animate-spin" />

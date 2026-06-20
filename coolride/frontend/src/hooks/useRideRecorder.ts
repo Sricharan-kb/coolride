@@ -42,6 +42,11 @@ export function useRideRecorder({ userId }: UseRideRecorderArgs) {
   const [tick, setTick] = useState(0)
   const [ridesRefreshKey, setRidesRefreshKey] = useState(0)
 
+  // Preserved final ride stats (available after ride ends)
+  const [lastRideDistanceKm, setLastRideDistanceKm] = useState(0)
+  const [lastRideDurationSec, setLastRideDurationSec] = useState(0)
+  const [lastRideAvgSpeed, setLastRideAvgSpeed] = useState(0)
+
   const isTracking = rideState === 'recording'
   const { position, error: geoError } = useGeolocation(isTracking)
   const { lux, acceleration } = useSensors(isTracking)
@@ -251,13 +256,25 @@ export function useRideRecorder({ userId }: UseRideRecorderArgs) {
       }))
     )
     setTimelineRoute(routeCoords)
+
+    // Preserve final stats for summary card
+    const finalDistanceKm = distanceRef.current / 1000
+    const finalDurationSec = durationSec
+    const finalAvgSpeed = finalDurationSec > 0 ? (finalDistanceKm / (finalDurationSec / 3600)) : 0
+    setLastRideDistanceKm(finalDistanceKm)
+    setLastRideDurationSec(finalDurationSec)
+    setLastRideAvgSpeed(finalAvgSpeed)
+
     setShowFeedback(true)
   }, [rideId])
 
   const completeFeedback = useCallback(() => {
     setShowFeedback(false)
-    setShowTimeline(true)
     setRidesRefreshKey((k) => k + 1)
+  }, [])
+
+  const viewTimeline = useCallback(() => {
+    setShowTimeline(true)
   }, [])
 
   const closeTimeline = useCallback(() => {
@@ -274,6 +291,9 @@ export function useRideRecorder({ userId }: UseRideRecorderArgs) {
     setShowTimeline(false)
     setTimelinePoints(null)
     setTimelineRoute(null)
+    setLastRideDistanceKm(0)
+    setLastRideDurationSec(0)
+    setLastRideAvgSpeed(0)
   }, [])
 
   const durationSeconds =
@@ -318,11 +338,15 @@ export function useRideRecorder({ userId }: UseRideRecorderArgs) {
     timelinePoints,
     timelineRoute,
     ridesRefreshKey,
+    lastRideDistanceKm,
+    lastRideDurationSec,
+    lastRideAvgSpeed,
     start,
     pause,
     resume,
     stop,
     completeFeedback,
+    viewTimeline,
     closeTimeline,
     reset,
   }
