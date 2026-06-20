@@ -52,7 +52,25 @@ function parseWKT(wkt: string): { lat: number; lng: number } | null {
 }
 
 function parseLocation(raw: unknown): { lat: number; lng: number } | null {
-  // Try GeoJSON first
+  // Primary: JSON string from st_asgeojson() — "{\"type\":\"Point\",\"coordinates\":[lng,lat]}"
+  if (typeof raw === 'string' && raw.trim().startsWith('{')) {
+    try {
+      const parsed = JSON.parse(raw) as GeoJSONPoint
+      if (
+        parsed.type === 'Point' &&
+        Array.isArray(parsed.coordinates) &&
+        parsed.coordinates.length === 2 &&
+        typeof parsed.coordinates[0] === 'number' &&
+        typeof parsed.coordinates[1] === 'number'
+      ) {
+        return { lat: parsed.coordinates[1], lng: parsed.coordinates[0] }
+      }
+    } catch {
+      // not valid JSON, fall through
+    }
+  }
+
+  // Fallback 1: GeoJSON object
   const geo = raw as GeoJSONPoint | undefined
   if (
     geo &&
@@ -65,13 +83,13 @@ function parseLocation(raw: unknown): { lat: number; lng: number } | null {
     return { lat: geo.coordinates[1], lng: geo.coordinates[0] }
   }
 
-  // Fallback: WKT string "POINT(lng lat)"
+  // Fallback 2: WKT string "POINT(lng lat)"
   if (typeof raw === 'string') {
     const parsed = parseWKT(raw)
     if (parsed) return parsed
   }
 
-  // Fallback: direct object
+  // Fallback 3: direct object
   const direct = raw as { lat?: number; lng?: number } | undefined
   if (direct && typeof direct.lat === 'number' && typeof direct.lng === 'number') {
     return { lat: direct.lat, lng: direct.lng }
@@ -130,7 +148,7 @@ export function RideHistory({
     try {
       const { data, error } = await supabase
         .from('ride_points')
-        .select('*')
+        .select('*, location:st_asgeojson(location)')
         .eq('ride_id', rideId)
         .order('point_index', { ascending: true })
 
