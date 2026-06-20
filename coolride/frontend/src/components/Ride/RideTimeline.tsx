@@ -18,6 +18,25 @@ export function RideTimeline({ points, route, onClose, title = 'Ride Details' }:
     : null
   const percentage = total > 1 ? Math.round((index / (total - 1)) * 100) : 0
 
+  // Guard: no GPS data
+  if (total === 0) {
+    return (
+      <div className="relative w-full h-full flex items-center justify-center bg-gray-100 dark:bg-zinc-900">
+        <div className="text-center">
+          <p className="text-gray-500 dark:text-zinc-400 mb-4">No GPS data available for this ride</p>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="text-sm text-emerald-600 dark:text-emerald-400 underline"
+            >
+              Go back
+            </button>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="relative w-full h-full">
       {/* Full-screen map */}

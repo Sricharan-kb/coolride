@@ -36,13 +36,23 @@ function formatDurationMin(seconds: number | null): string {
   return `${mins} min`
 }
 
-// Supabase PostGIS returns location as GeoJSON: { type: "Point", coordinates: [lng, lat] }
+// Supabase PostGIS can return location as GeoJSON or WKT string
 interface GeoJSONPoint {
   type: 'Point'
   coordinates: [number, number]
 }
 
+function parseWKT(wkt: string): { lat: number; lng: number } | null {
+  const match = wkt.match(/POINT\s*\(\s*([-\d.]+)\s+([-\d.]+)\s*\)/i)
+  if (!match) return null
+  const lng = parseFloat(match[1])
+  const lat = parseFloat(match[2])
+  if (isNaN(lat) || isNaN(lng)) return null
+  return { lat, lng }
+}
+
 function parseLocation(raw: unknown): { lat: number; lng: number } | null {
+  // Try GeoJSON first
   const geo = raw as GeoJSONPoint | undefined
   if (
     geo &&
@@ -54,10 +64,19 @@ function parseLocation(raw: unknown): { lat: number; lng: number } | null {
   ) {
     return { lat: geo.coordinates[1], lng: geo.coordinates[0] }
   }
+
+  // Fallback: WKT string "POINT(lng lat)"
+  if (typeof raw === 'string') {
+    const parsed = parseWKT(raw)
+    if (parsed) return parsed
+  }
+
+  // Fallback: direct object
   const direct = raw as { lat?: number; lng?: number } | undefined
   if (direct && typeof direct.lat === 'number' && typeof direct.lng === 'number') {
     return { lat: direct.lat, lng: direct.lng }
   }
+
   return null
 }
 
@@ -95,7 +114,8 @@ export function RideHistory({
             )
           )
         }
-      } catch {
+      } catch (err) {
+        console.error('Failed to fetch rides:', err)
         if (!cancelled) setRides([])
       } finally {
         if (!cancelled) setLoading(false)
@@ -119,7 +139,7 @@ export function RideHistory({
       const transformed: RidePoint[] = data
         .map((p): RidePoint | null => {
           const loc = parseLocation(p.location)
-          if (!loc || typeof p.ride_id !== 'string' || typeof p.point_index !== 'number') {
+          if (!loc || typeof p.ride_id !== 'string' || typeof p.point_index !== 'number' || typeof p.recorded_at !== 'string') {
             return null
           }
           return {
@@ -145,8 +165,8 @@ export function RideHistory({
         .filter(([lat, lng]) => typeof lat === 'number' && typeof lng === 'number')
 
       onSelectRide(rideId, transformed, routeCoords)
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error('Failed to load ride points:', err)
     }
   }
 
