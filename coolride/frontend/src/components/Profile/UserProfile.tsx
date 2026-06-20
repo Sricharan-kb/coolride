@@ -146,9 +146,9 @@ export function UserProfile({
 
         <button
           onClick={onViewRideHistory}
-          className="w-full text-left border border-gray-200 dark:border-zinc-800 px-3 py-2 text-sm text-gray-900 dark:text-zinc-100"
+          className="w-full text-left border border-gray-200 dark:border-zinc-800 px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800"
         >
-          Ride History
+          My Rides
         </button>
 
         <button
