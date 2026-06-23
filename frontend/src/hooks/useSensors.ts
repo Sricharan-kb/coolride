@@ -34,6 +34,16 @@ export function useSensors(isTracking: boolean): SensorState {
       alsCleanup = () => sensor.stop()
     } catch {
       setAlsSupported(false)
+      // Fallback: light-level CSS media query (available on Safari iOS 16.5+, Chrome Android 95+)
+      if (window.matchMedia) {
+        if (window.matchMedia('(light-level: dim)').matches) {
+          setLux(50)
+        } else if (window.matchMedia('(light-level: washed)').matches) {
+          setLux(2000)
+        } else if (window.matchMedia('(light-level: normal)').matches) {
+          setLux(500)
+        }
+      }
     }
 
     return () => {
