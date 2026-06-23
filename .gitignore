@@ -1,6 +1,8 @@
 # Environment
 .env
 .env.*
+.env.local
+.env.*.local
 !.env.example
 
 # QGIS
@@ -20,7 +22,12 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
 
 # Python (unused in this project, kept from upstream)
 __pycache__/
 *.py[codz]
+
+# Session files
+session-*.md
