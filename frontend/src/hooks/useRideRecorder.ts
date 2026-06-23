@@ -183,11 +183,29 @@ export function useRideRecorder({ userId }: UseRideRecorderArgs) {
 
     const points = pointsRef.current
     let avgLux: number | null = null
+    let luxStdDev: number | null = null
+    let shadeProfile: string | null = null
     let avgAccelMagnitude: number | null = null
 
     const luxVals = points.filter((p) => p.lux !== null).map((p) => p.lux as number)
     if (luxVals.length > 0) {
-      avgLux = luxVals.reduce((s, v) => s + v, 0) / luxVals.length
+      const sum = luxVals.reduce((s, v) => s + v, 0)
+      avgLux = sum / luxVals.length
+      const variance = luxVals.reduce((s, v) => s + (v - avgLux!) ** 2, 0) / luxVals.length
+      luxStdDev = Math.sqrt(variance)
+
+      // Derive shade profile from avg lux + variation
+      if (avgLux >= 10000) {
+        shadeProfile = 'extreme_heat'
+      } else if (avgLux >= 2200) {
+        shadeProfile = luxStdDev > 500 ? 'intermittent_shade' : 'open_sunny'
+      } else if (avgLux >= 1000) {
+        shadeProfile = luxStdDev > 500 ? 'intermittent_shade' : 'light_cover'
+      } else if (avgLux >= 500) {
+        shadeProfile = luxStdDev > 300 ? 'light_cover' : 'fully_shaded'
+      } else {
+        shadeProfile = luxStdDev > 200 ? 'light_cover' : 'fully_shaded'
+      }
     }
 
     const accelVals = points
@@ -206,6 +224,8 @@ export function useRideRecorder({ userId }: UseRideRecorderArgs) {
         weather_snapshot: lastWeatherRef.current,
         sensor_data: {
           avg_lux: avgLux,
+          lux_std_dev: luxStdDev,
+          shade_profile: shadeProfile,
           avg_accel_magnitude: avgAccelMagnitude,
         },
       })
