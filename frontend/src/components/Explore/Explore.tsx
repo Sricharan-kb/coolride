@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import type { Ride, RidePoint } from '../../types/index'
 import { supabase } from '../../lib/supabase'
+import { parseLocation } from '../../lib/geo'
 
 interface ExploreProps {
   userId: string
@@ -120,26 +121,14 @@ export function Explore({ userId, onSelectRide }: ExploreProps) {
 
       const points = data
         .map((p) => {
-          // Parse WKB hex location
-          const raw = p.location as string
-          if (!raw) return null
-          const pairs = raw.match(/.{2}/g)
-          if (!pairs) return null
-          const bytes = new Uint8Array(pairs.map((b: string) => parseInt(b, 16)))
-          if (bytes.length < 21) return null
-          const view = new DataView(bytes.buffer)
-          const isLE = view.getUint8(0) === 1
-          let off = 5
-          const type = view.getUint32(1, isLE)
-          if (type & 0x20000000) off += 4
-          const lng = view.getFloat64(off, isLE)
-          const lat = view.getFloat64(off + 8, isLE)
+          const loc = parseLocation(p.location)
+          if (!loc) return null
 
           return {
             id: String(p.id ?? ''),
             ride_id: p.ride_id,
             point_index: p.point_index as number,
-            location: { lat, lng },
+            location: { lat: loc.lat, lng: loc.lng },
             recorded_at: p.recorded_at as string,
             temperature: typeof p.temperature === 'number' ? p.temperature : null,
             humidity: typeof p.humidity === 'number' ? p.humidity : null,

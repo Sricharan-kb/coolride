@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import type { Ride, RidePoint } from '../../types/index'
 import { supabase } from '../../lib/supabase'
+import { parseLocation } from '../../lib/geo'
 
 interface RideHistoryProps {
   userId: string
@@ -35,104 +36,6 @@ function formatDurationMin(seconds: number | null): string {
   if (seconds == null) return '—'
   const mins = Math.round(seconds / 60)
   return `${mins} min`
-}
-
-// Supabase PostGIS can return location as GeoJSON or WKT string
-interface GeoJSONPoint {
-  type: 'Point'
-  coordinates: [number, number]
-}
-
-function parseWKT(wkt: string): { lat: number; lng: number } | null {
-  const match = wkt.match(/POINT\s*\(\s*([-\d.]+)\s+([-\d.]+)\s*\)/i)
-  if (!match) return null
-  const lng = parseFloat(match[1])
-  const lat = parseFloat(match[2])
-  if (isNaN(lat) || isNaN(lng)) return null
-  return { lat, lng }
-}
-
-// Parse PostGIS WKB hex string (e.g. "0101000020E6100000...")
-// Format: 1 byte endian + 4 bytes type + [4 bytes SRID if flagged] + 8 bytes X + 8 bytes Y
-function parseWKBHex(hex: string): { lat: number; lng: number } | null {
-  if (!hex || hex.length < 34) return null
-
-  const pairs = hex.match(/.{2}/g)
-  if (!pairs) return null
-  const bytes = new Uint8Array(pairs.map((b) => parseInt(b, 16)))
-  if (bytes.length < 21) return null
-
-  const view = new DataView(bytes.buffer)
-  const isLittleEndian = view.getUint8(0) === 1
-
-  let offset = 5 // skip endian (1) + type (4)
-
-  // Check if SRID present (type has 0x20000000 flag)
-  const type = view.getUint32(1, isLittleEndian)
-  if (type & 0x20000000) {
-    offset += 4 // skip SRID (4 bytes)
-  }
-
-  if (bytes.length < offset + 16) return null
-
-  const lng = view.getFloat64(offset, isLittleEndian)
-  const lat = view.getFloat64(offset + 8, isLittleEndian)
-
-  if (isNaN(lat) || isNaN(lng)) return null
-  return { lat, lng }
-}
-
-function parseLocation(raw: unknown): { lat: number; lng: number } | null {
-  // Primary: WKB hex string (what Supabase actually returns for geography columns)
-  if (typeof raw === 'string' && /^[0-9A-Fa-f]+$/.test(raw)) {
-    const parsed = parseWKBHex(raw)
-    if (parsed) return parsed
-  }
-
-  // Fallback 1: GeoJSON object
-  const geo = raw as GeoJSONPoint | undefined
-  if (
-    geo &&
-    geo.type === 'Point' &&
-    Array.isArray(geo.coordinates) &&
-    geo.coordinates.length === 2 &&
-    typeof geo.coordinates[0] === 'number' &&
-    typeof geo.coordinates[1] === 'number'
-  ) {
-    return { lat: geo.coordinates[1], lng: geo.coordinates[0] }
-  }
-
-  // Fallback 2: GeoJSON JSON string
-  if (typeof raw === 'string' && raw.trim().startsWith('{')) {
-    try {
-      const parsed = JSON.parse(raw) as GeoJSONPoint
-      if (
-        parsed.type === 'Point' &&
-        Array.isArray(parsed.coordinates) &&
-        parsed.coordinates.length === 2 &&
-        typeof parsed.coordinates[0] === 'number' &&
-        typeof parsed.coordinates[1] === 'number'
-      ) {
-        return { lat: parsed.coordinates[1], lng: parsed.coordinates[0] }
-      }
-    } catch {
-      // not valid JSON, fall through
-    }
-  }
-
-  // Fallback 3: WKT string "POINT(lng lat)"
-  if (typeof raw === 'string') {
-    const parsed = parseWKT(raw)
-    if (parsed) return parsed
-  }
-
-  // Fallback 4: direct object
-  const direct = raw as { lat?: number; lng?: number } | undefined
-  if (direct && typeof direct.lat === 'number' && typeof direct.lng === 'number') {
-    return { lat: direct.lat, lng: direct.lng }
-  }
-
-  return null
 }
 
 export function RideHistory({
