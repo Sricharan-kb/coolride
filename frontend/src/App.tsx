@@ -21,7 +21,7 @@ type AuthView = 'login' | 'register'
 
 export function App() {
   const [authLoading, setAuthLoading] = useState(true)
-  const [session, setSession] = useState<{ user: { id: string; email: string; user_metadata?: { is_admin?: boolean } } } | null>(null)
+  const [session, setSession] = useState<{ user: { id: string; email: string } } | null>(null)
   const [authView, setAuthView] = useState<AuthView>('login')
   const [activeTab, setActiveTab] = useState<Tab>('map')
   const [profileView, setProfileView] = useState<ProfileView>('profile')
@@ -29,6 +29,7 @@ export function App() {
     typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
   )
   const [sharePublic, setSharePublic] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   // For viewing past rides from history or explore
   const [pastRide, setPastRide] = useState<{
@@ -42,7 +43,6 @@ export function App() {
   const [showSummary, setShowSummary] = useState(false)
 
   const userId = session?.user?.id ?? ''
-  const isAdmin = session?.user?.user_metadata?.is_admin === true
   const recorder = useRideRecorder({ userId })
 
   useEffect(() => {
@@ -51,7 +51,7 @@ export function App() {
     } = supabase.auth.onAuthStateChange((_event, currentSession) => {
       setSession(
         currentSession?.user
-          ? { user: { id: currentSession.user.id, email: currentSession.user.email ?? '', user_metadata: currentSession.user.user_metadata as { is_admin?: boolean } } }
+          ? { user: { id: currentSession.user.id, email: currentSession.user.email ?? '' } }
           : null
       )
       setAuthLoading(false)
@@ -59,6 +59,16 @@ export function App() {
 
     return () => subscription.unsubscribe()
   }, [])
+
+  useEffect(() => {
+    if (!userId) {
+      setIsAdmin(false)
+      return
+    }
+    supabase.from('user_roles').select('role').eq('user_id', userId).single()
+      .then(({ data }) => { setIsAdmin(data?.role === 'admin') })
+      .catch(() => { setIsAdmin(false) })
+  }, [userId])
 
   const handleStart = useCallback(async () => {
     if (!session) return
