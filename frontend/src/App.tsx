@@ -244,7 +244,6 @@ export function App() {
           <div className="h-full overflow-y-auto">
             <Explore
               userId={userId}
-              isAdmin={isAdmin}
               onSelectRide={(rideId, points, route, rideName) =>
                 handleSelectPastRide(rideId, points, route, rideName)
               }

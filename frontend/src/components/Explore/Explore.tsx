@@ -4,7 +4,6 @@ import { supabase } from '../../lib/supabase'
 
 interface ExploreProps {
   userId: string
-  isAdmin: boolean
   onSelectRide: (rideId: string, points: RidePoint[], route: [number, number][], rideName: string) => void
 }
 
@@ -31,7 +30,7 @@ function getGoogleMapsUrl(firstLat: number, firstLng: number, lastLat: number, l
   return `https://www.google.com/maps/dir/?api=1&origin=${firstLat},${firstLng}&destination=${lastLat},${lastLng}`
 }
 
-export function Explore({ userId, isAdmin, onSelectRide }: ExploreProps) {
+export function Explore({ userId, onSelectRide }: ExploreProps) {
   const [rides, setRides] = useState<(Ride & { star_count: number; user_starred: boolean })[]>([])
   const [loading, setLoading] = useState(true)
 
