@@ -7,7 +7,24 @@ export interface Ride {
   distance_m: number | null
   duration_sec: number | null
   weather_snapshot: WeatherData | null
-  sensor_data: { avg_lux: number | null; avg_accel_magnitude: number | null } | null
+  sensor_data: { avg_lux: number | null; lux_std_dev: number | null; shade_profile: string | null; avg_accel_magnitude: number | null } | null
+  is_public: boolean
+  start_lat: number | null
+  start_lng: number | null
+  end_lat: number | null
+  end_lng: number | null
+}
+
+export interface RideStar {
+  id: string
+  user_id: string
+  ride_id: string
+  created_at: string
+}
+
+export interface PublicRide extends Ride {
+  star_count: number | null
+  user_starred: boolean
 }
 
 export interface RidePoint {

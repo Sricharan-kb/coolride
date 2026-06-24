@@ -5,6 +5,8 @@ interface RideSummaryCardProps {
   durationSec: number
   avgSpeedKmh: number
   weatherSnapshot: WeatherData | null
+  isPublic: boolean
+  onTogglePublic: () => void
   onViewDetails: () => void
   onClose: () => void
 }
@@ -20,6 +22,8 @@ export function RideSummaryCard({
   durationSec,
   avgSpeedKmh,
   weatherSnapshot,
+  isPublic,
+  onTogglePublic,
   onViewDetails,
   onClose,
 }: RideSummaryCardProps) {
@@ -65,6 +69,24 @@ export function RideSummaryCard({
             <span>{weatherSnapshot.description}</span>
           </div>
         )}
+
+        <div className="flex items-center justify-between mb-4 px-2 py-2 bg-gray-50 dark:bg-zinc-800 rounded">
+          <span className="text-sm text-gray-700 dark:text-zinc-300">
+            Share this route publicly
+          </span>
+          <button
+            onClick={onTogglePublic}
+            className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${
+              isPublic ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-zinc-600'
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${
+                isPublic ? 'translate-x-5' : 'translate-x-0.5'
+              }`}
+            />
+          </button>
+        </div>
 
         <div className="flex gap-3">
           <button

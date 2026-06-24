@@ -46,6 +46,7 @@ export function useRideRecorder({ userId }: UseRideRecorderArgs) {
   const [lastRideDistanceKm, setLastRideDistanceKm] = useState(0)
   const [lastRideDurationSec, setLastRideDurationSec] = useState(0)
   const [lastRideAvgSpeed, setLastRideAvgSpeed] = useState(0)
+  const [lastRideIsPublic, setLastRideIsPublic] = useState(false)
 
   const isTracking = rideState === 'recording'
   const { position, error: geoError } = useGeolocation(isTracking)
@@ -215,12 +216,21 @@ export function useRideRecorder({ userId }: UseRideRecorderArgs) {
       avgAccelMagnitude = accelVals.reduce((s, v) => s + v, 0) / accelVals.length
     }
 
+    const isPublic = durationSec >= 300 && distanceM >= 1000
+    const firstPoint = points.length > 0 ? points[0] : null
+    const lastPoint = points.length > 0 ? points[points.length - 1] : null
+
     const { error: updateError } = await supabase
       .from('rides')
       .update({
         ended_at: endedAt,
         distance_m: distanceM,
         duration_sec: durationSec,
+        is_public: isPublic,
+        start_lat: firstPoint?.lat ?? null,
+        start_lng: firstPoint?.lng ?? null,
+        end_lat: lastPoint?.lat ?? null,
+        end_lng: lastPoint?.lng ?? null,
         weather_snapshot: lastWeatherRef.current,
         sensor_data: {
           avg_lux: avgLux,
@@ -284,6 +294,7 @@ export function useRideRecorder({ userId }: UseRideRecorderArgs) {
     setLastRideDistanceKm(finalDistanceKm)
     setLastRideDurationSec(finalDurationSec)
     setLastRideAvgSpeed(finalAvgSpeed)
+    setLastRideIsPublic(isPublic)
 
     setShowFeedback(true)
   }, [rideId])
@@ -314,6 +325,7 @@ export function useRideRecorder({ userId }: UseRideRecorderArgs) {
     setLastRideDistanceKm(0)
     setLastRideDurationSec(0)
     setLastRideAvgSpeed(0)
+    setLastRideIsPublic(false)
   }, [])
 
   const durationSeconds =
@@ -361,6 +373,7 @@ export function useRideRecorder({ userId }: UseRideRecorderArgs) {
     lastRideDistanceKm,
     lastRideDurationSec,
     lastRideAvgSpeed,
+    lastRideIsPublic,
     start,
     pause,
     resume,

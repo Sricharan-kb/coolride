@@ -6,6 +6,7 @@ interface RideHistoryProps {
   userId: string
   refreshKey: number
   activeRideId: string | null
+  isAdmin: boolean
   onBack: () => void
   onSelectRide: (rideId: string, points: RidePoint[], route: [number, number][]) => void
 }
@@ -138,6 +139,7 @@ export function RideHistory({
   userId,
   refreshKey,
   activeRideId,
+  isAdmin,
   onBack,
   onSelectRide,
 }: RideHistoryProps) {
@@ -153,11 +155,11 @@ export function RideHistory({
     const fetchRides = async () => {
       try {
         setError(null)
-        const { data, error } = await supabase
-          .from('rides')
-          .select('*')
-          .eq('user_id', userId)
-          .order('started_at', { ascending: false })
+        let query = supabase.from('rides').select('*').order('started_at', { ascending: false })
+        if (!isAdmin) {
+          query = query.eq('user_id', userId)
+        }
+        const { data, error } = await query
 
         if (cancelled) return
         if (error) {
@@ -174,8 +176,7 @@ export function RideHistory({
           )
         }
       } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err)
-        setError('Failed to load rides: ' + msg)
+        console.error('Failed to fetch rides:', err)
         if (!cancelled) setRides([])
       } finally {
         if (!cancelled) setLoading(false)
@@ -311,9 +312,10 @@ export function RideHistory({
 
         {!loading && rides.length > 0 && (
           <div className="flex flex-col gap-3">
-            {rides.map((ride) => {
+             {rides.map((ride) => {
               const isActive = ride.id === activeRideId && !ride.ended_at
               const isDeleting = deleteConfirmId === ride.id
+              const isOwnRide = (ride as Ride & { user_id: string }).user_id === userId
 
               return (
                 <div
@@ -324,13 +326,18 @@ export function RideHistory({
                     onClick={() => handleSelectRide(ride.id)}
                     className="w-full text-left p-3"
                   >
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2 mb-1">
                       <span className="text-sm font-medium text-gray-900 dark:text-zinc-100">
                         {formatDate(ride.started_at)}
                       </span>
                       {isActive && (
                         <span className="text-xs font-medium text-white bg-emerald-500 px-2 py-0.5 rounded-full">
                           LIVE
+                        </span>
+                      )}
+                      {(ride as Ride & { is_public: boolean }).is_public && (
+                        <span className="text-xs text-gray-500 dark:text-zinc-400 border border-gray-300 dark:border-zinc-600 px-1.5 py-0.5 rounded-full">
+                          public
                         </span>
                       )}
                     </div>
@@ -343,8 +350,8 @@ export function RideHistory({
                     </div>
                   </button>
 
-                  {/* Delete button */}
-                  {!isActive && (
+                  {/* Delete button — only for own rides */}
+                  {!isActive && isOwnRide && (
                     <div className="px-3 pb-2">
                       {isDeleting ? (
                         <div className="flex items-center gap-2 text-xs">

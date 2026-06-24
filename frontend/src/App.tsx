@@ -12,33 +12,37 @@ import { RideTimeline } from './components/Ride/RideTimeline'
 import { RideSummaryCard } from './components/Ride/RideSummaryCard'
 import { RideHistory } from './components/Profile/RideHistory'
 import { UserProfile } from './components/Profile/UserProfile'
+import { Explore } from './components/Explore/Explore'
 import { useRideRecorder } from './hooks/useRideRecorder'
 
-type Tab = 'map' | 'profile'
+type Tab = 'map' | 'explore' | 'profile'
 type ProfileView = 'profile' | 'rides'
 type AuthView = 'login' | 'register'
 
 export function App() {
   const [authLoading, setAuthLoading] = useState(true)
-  const [session, setSession] = useState<{ user: { id: string; email: string } } | null>(null)
+  const [session, setSession] = useState<{ user: { id: string; email: string; user_metadata?: { is_admin?: boolean } } } | null>(null)
   const [authView, setAuthView] = useState<AuthView>('login')
   const [activeTab, setActiveTab] = useState<Tab>('map')
   const [profileView, setProfileView] = useState<ProfileView>('profile')
   const [isDark, setIsDark] = useState(
     typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
   )
+  const [sharePublic, setSharePublic] = useState(false)
 
-  // For viewing past rides from history
+  // For viewing past rides from history or explore
   const [pastRide, setPastRide] = useState<{
     rideId: string
     points: RidePoint[]
     route: [number, number][]
+    rideName: string
   } | null>(null)
 
   // Post-ride summary card
   const [showSummary, setShowSummary] = useState(false)
 
   const userId = session?.user?.id ?? ''
+  const isAdmin = session?.user?.user_metadata?.is_admin === true
   const recorder = useRideRecorder({ userId })
 
   useEffect(() => {
@@ -47,7 +51,7 @@ export function App() {
     } = supabase.auth.onAuthStateChange((_event, currentSession) => {
       setSession(
         currentSession?.user
-          ? { user: { id: currentSession.user.id, email: currentSession.user.email ?? '' } }
+          ? { user: { id: currentSession.user.id, email: currentSession.user.email ?? '', user_metadata: currentSession.user.user_metadata as { is_admin?: boolean } } }
           : null
       )
       setAuthLoading(false)
@@ -64,6 +68,7 @@ export function App() {
 
   const handleFeedbackSubmit = useCallback(() => {
     recorder.completeFeedback()
+    setSharePublic(recorder.lastRideIsPublic)
     setShowSummary(true)
   }, [recorder])
 
@@ -75,6 +80,14 @@ export function App() {
   const handleCloseSummary = useCallback(() => {
     setShowSummary(false)
   }, [])
+
+  const handleTogglePublic = useCallback(async () => {
+    const newVal = !sharePublic
+    setSharePublic(newVal)
+    if (recorder.rideId) {
+      await supabase.from('rides').update({ is_public: newVal }).eq('id', recorder.rideId)
+    }
+  }, [sharePublic, recorder.rideId])
 
   const handleToggleDarkMode = useCallback(() => {
     const root = document.documentElement
@@ -97,18 +110,23 @@ export function App() {
   }, [recorder])
 
   const handleSelectPastRide = useCallback(
-    (rideId: string, points: RidePoint[], route: [number, number][]) => {
-      setPastRide({ rideId, points, route })
+    (rideId: string, points: RidePoint[], route: [number, number][], rideName?: string) => {
+      setPastRide({ rideId, points, route, rideName: rideName || 'Ride' })
       setActiveTab('map')
     },
     []
   )
 
   const handleClosePastRide = useCallback(() => {
+    const wasFromExplore = pastRide?.rideName !== ''
     setPastRide(null)
-    setActiveTab('profile')
-    setProfileView('rides')
-  }, [])
+    if (wasFromExplore) {
+      setActiveTab('explore')
+    } else {
+      setActiveTab('profile')
+      setProfileView('rides')
+    }
+  }, [pastRide])
 
   if (authLoading) {
     return (
@@ -144,7 +162,8 @@ export function App() {
                 points={pastRide.points}
                 route={pastRide.route}
                 onClose={handleClosePastRide}
-                title="Past Ride"
+                title={pastRide.rideName}
+                rideName={pastRide.rideName}
               />
             ) : /* Mode: Post-ride timeline */ recorder.showTimeline && recorder.timelinePoints && recorder.timelineRoute ? (
               <RideTimeline
@@ -152,17 +171,16 @@ export function App() {
                 route={recorder.timelineRoute}
                 onClose={recorder.closeTimeline}
                 title="Ride Summary"
+                rideName="ride"
               />
             ) : (
               <>
-                {/* Map always visible */}
                 <RideMap
                   currentPosition={recorder.position ? [recorder.position.lat, recorder.position.lng] : null}
                   route={recorder.route}
                   isRiding={recorder.rideState === 'recording'}
                 />
 
-                {/* Weather widget (top-right) */}
                 <div className="absolute top-3 right-3 z-[1000]">
                   <WeatherWidget
                     temperature={recorder.weather?.temperature ?? null}
@@ -174,14 +192,12 @@ export function App() {
                   />
                 </div>
 
-                {/* GPS Error (top-left) */}
                 {recorder.geoError && (
                   <div className="absolute top-3 left-3 z-[1000] bg-white dark:bg-zinc-900 px-3 py-1 text-sm text-red-600 dark:text-red-400 rounded-full shadow">
                     {recorder.geoError}
                   </div>
                 )}
 
-                {/* Live stats (bottom, above controls) */}
                 {recorder.rideState !== 'idle' && (
                   <div className="absolute bottom-20 left-0 right-0 z-[1000]">
                     <LiveStats
@@ -196,7 +212,6 @@ export function App() {
                   </div>
                 )}
 
-                {/* Ride controls (bottom) */}
                 <div className="absolute bottom-4 left-0 right-0 flex justify-center z-[1000]">
                   <RideControls
                     rideState={recorder.rideState}
@@ -207,19 +222,33 @@ export function App() {
                   />
                 </div>
 
-                {/* Post-ride summary card */}
                 {showSummary && (
                   <RideSummaryCard
                     distanceKm={recorder.lastRideDistanceKm}
                     durationSec={recorder.lastRideDurationSec}
                     avgSpeedKmh={recorder.lastRideAvgSpeed}
                     weatherSnapshot={recorder.weather}
+                    isPublic={sharePublic}
+                    onTogglePublic={handleTogglePublic}
                     onViewDetails={handleViewDetails}
                     onClose={handleCloseSummary}
                   />
                 )}
               </>
             )}
+          </div>
+        )}
+
+        {/* EXPLORE TAB */}
+        {activeTab === 'explore' && (
+          <div className="h-full overflow-y-auto">
+            <Explore
+              userId={userId}
+              isAdmin={isAdmin}
+              onSelectRide={(rideId, points, route, rideName) =>
+                handleSelectPastRide(rideId, points, route, rideName)
+              }
+            />
           </div>
         )}
 
@@ -231,8 +260,11 @@ export function App() {
                 userId={userId}
                 refreshKey={recorder.ridesRefreshKey}
                 activeRideId={recorder.rideId}
+                isAdmin={isAdmin}
                 onBack={() => setProfileView('profile')}
-                onSelectRide={handleSelectPastRide}
+                onSelectRide={(rideId, points, route) =>
+                  handleSelectPastRide(rideId, points, route)
+                }
               />
             ) : (
               <UserProfile
@@ -261,7 +293,7 @@ export function App() {
       {/* Bottom nav */}
       <nav className="flex-shrink-0 border-t border-gray-200 dark:border-zinc-800 flex h-14 bg-white dark:bg-zinc-950">
         <button
-          onClick={() => setActiveTab('map')}
+          onClick={() => { setPastRide(null); setActiveTab('map') }}
           className={`flex-1 flex items-center justify-center text-sm font-medium ${
             activeTab === 'map'
               ? 'text-emerald-600 dark:text-emerald-400'
@@ -271,7 +303,17 @@ export function App() {
           Map
         </button>
         <button
-          onClick={() => setActiveTab('profile')}
+          onClick={() => { setPastRide(null); setActiveTab('explore') }}
+          className={`flex-1 flex items-center justify-center text-sm font-medium ${
+            activeTab === 'explore'
+              ? 'text-emerald-600 dark:text-emerald-400'
+              : 'text-gray-500 dark:text-zinc-400'
+          }`}
+        >
+          Explore
+        </button>
+        <button
+          onClick={() => { setPastRide(null); setActiveTab('profile') }}
           className={`flex-1 flex items-center justify-center text-sm font-medium ${
             activeTab === 'profile'
               ? 'text-emerald-600 dark:text-emerald-400'

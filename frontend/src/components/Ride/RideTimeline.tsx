@@ -1,15 +1,17 @@
 import { useState } from 'react'
 import type { RidePoint } from '../../types/index'
 import { RideMap } from '../Map/RideMap'
+import { downloadGPX } from '../../lib/gpx'
 
 interface RideTimelineProps {
   points: RidePoint[]
   route: [number, number][]
   onClose?: () => void
   title?: string
+  rideName?: string
 }
 
-export function RideTimeline({ points, route, onClose, title = 'Ride Details' }: RideTimelineProps) {
+export function RideTimeline({ points, route, onClose, title = 'Ride Details', rideName }: RideTimelineProps) {
   const [index, setIndex] = useState(0)
   const total = points.length
   const current = points[index]
@@ -111,6 +113,14 @@ export function RideTimeline({ points, route, onClose, title = 'Ride Details' }:
             </div>
           </div>
         )}
+
+        {/* Export GPX */}
+        <button
+          onClick={() => downloadGPX(points, rideName || 'ride')}
+          className="mt-2 w-full py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-zinc-700 rounded"
+        >
+          Export GPX
+        </button>
       </div>
     </div>
   )
