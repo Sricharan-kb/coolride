@@ -34,6 +34,7 @@ function getGoogleMapsUrl(firstLat: number, firstLng: number, lastLat: number, l
 export function Explore({ userId, onSelectRide }: ExploreProps) {
   const [rides, setRides] = useState<(Ride & { star_count: number; user_starred: boolean })[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -110,6 +111,7 @@ export function Explore({ userId, onSelectRide }: ExploreProps) {
   }, [userId])
 
   const handleSelectRide = async (ride: Ride & { star_count: number; user_starred: boolean }) => {
+    setError(null)
     try {
       const { data, error } = await supabase
         .from('ride_points')
@@ -119,6 +121,7 @@ export function Explore({ userId, onSelectRide }: ExploreProps) {
 
       if (error) {
         console.error('Explore: ride_points fetch error:', error.message, error.code)
+        setError('Failed to load ride data: ' + error.message)
         return
       }
 
@@ -126,6 +129,7 @@ export function Explore({ userId, onSelectRide }: ExploreProps) {
 
       if (!data || data.length === 0) {
         console.warn('Explore: no ride_points rows for ride', ride.id, '(RLS block or no data)')
+        setError('No GPS data stored for this ride. Was it recorded after the schema fix?')
         return
       }
 
@@ -161,6 +165,7 @@ export function Explore({ userId, onSelectRide }: ExploreProps) {
 
       if (points.length === 0) {
         console.error('Explore: all points failed to parse for ride', ride.id)
+        setError('Could not parse GPS data for this ride. Check console for details.')
         return
       }
 
@@ -172,6 +177,7 @@ export function Explore({ userId, onSelectRide }: ExploreProps) {
       onSelectRide(ride.id, points, route, rideDate)
     } catch (err) {
       console.error('Explore: handleSelectRide crashed:', err)
+      setError('Something went wrong loading this ride. Check console for details.')
     }
   }
 
@@ -213,6 +219,12 @@ export function Explore({ userId, onSelectRide }: ExploreProps) {
         {loading && (
           <div className="flex items-center justify-center h-32">
             <div className="w-6 h-6 border-2 border-emerald-600 dark:border-emerald-400 border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-3 p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded text-sm text-red-700 dark:text-red-400">
+            {error}
           </div>
         )}
 
