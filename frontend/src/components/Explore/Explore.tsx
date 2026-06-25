@@ -218,23 +218,22 @@ export function Explore({ userId, onSelectRide }: ExploreProps) {
             {rides.map((ride) => (
               <div
                 key={ride.id}
-                className="border border-gray-200 dark:border-zinc-800 rounded-lg overflow-hidden"
+                className="bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg overflow-hidden"
               >
                 <button
                   onClick={() => handleSelectRide(ride)}
-                  className="w-full text-left p-3"
+                  className="w-full text-left p-3.5"
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-gray-900 dark:text-zinc-100">
+                    <span className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
                       {formatDate(ride.started_at)}
                     </span>
                     {ride.user_id === userId && (
-                      <span className="text-xs text-emerald-600 dark:text-emerald-400">Your ride</span>
+                      <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Your ride</span>
                     )}
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-zinc-400">
-                    {formatDistanceKm(ride.distance_m)} ·{' '}
-                    {formatDurationMin(ride.duration_sec)}
+                  <div className="text-sm font-medium text-gray-800 dark:text-zinc-200">
+                    {formatDistanceKm(ride.distance_m)} · {formatDurationMin(ride.duration_sec)}
                   </div>
                   {ride.weather_snapshot && (
                     <div className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
@@ -243,26 +242,26 @@ export function Explore({ userId, onSelectRide }: ExploreProps) {
                   )}
                 </button>
 
-                <div className="flex items-center justify-between px-3 pb-2">
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => handleToggleStar(ride.id, ride.user_starred)}
-                      className={`text-sm ${
-                        ride.user_starred
-                          ? 'text-amber-500'
-                          : 'text-gray-400 dark:text-zinc-500'
-                      }`}
-                    >
-                      {ride.user_starred ? '\u2605' : '\u2606'}{' '}
-                      <span className="text-xs">{ride.star_count || 0}</span>
-                    </button>
+                <div className="flex items-center border-t border-gray-200 dark:border-zinc-700 divide-x divide-gray-200 dark:divide-zinc-700">
+                  <button
+                    onClick={() => handleToggleStar(ride.id, ride.user_starred)}
+                    className={`flex-1 py-2.5 text-xs font-medium flex items-center justify-center gap-1 ${
+                      ride.user_starred
+                        ? 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950'
+                        : 'text-gray-500 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                    }`}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill={ride.user_starred ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                    {ride.star_count || 0}
+                  </button>
 
-                    {ride.sensor_data?.shade_profile && (
-                      <span className="text-xs text-gray-500 dark:text-zinc-400">
-                        {ride.sensor_data.shade_profile.replace(/_/g, ' ')}
-                      </span>
-                    )}
-                  </div>
+                  {ride.sensor_data?.shade_profile && (
+                    <span className="flex-1 py-2.5 text-xs text-gray-500 dark:text-zinc-400 flex items-center justify-center capitalize">
+                      {ride.sensor_data.shade_profile.replace(/_/g, ' ')}
+                    </span>
+                  )}
 
                   <a
                     href={ride.start_lat != null && ride.start_lng != null
@@ -271,12 +270,16 @@ export function Explore({ userId, onSelectRide }: ExploreProps) {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className={`text-xs underline ${
+                    className={`flex-1 py-2.5 text-xs font-medium flex items-center justify-center gap-1 ${
                       ride.start_lat != null
-                        ? 'text-blue-600 dark:text-blue-400'
-                        : 'text-gray-400 cursor-default'
+                        ? 'text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950'
+                        : 'text-gray-400 dark:text-zinc-500 cursor-default'
                     }`}
                   >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="1 4 1 10 7 10" />
+                      <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                    </svg>
                     Route
                   </a>
                 </div>

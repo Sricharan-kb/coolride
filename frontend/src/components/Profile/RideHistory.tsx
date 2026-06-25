@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import type { Ride, RidePoint } from '../../types/index'
 import { supabase } from '../../lib/supabase'
 import { parseLocation } from '../../lib/geo'
+import { downloadGPX } from '../../lib/gpx'
 
 interface RideHistoryProps {
   userId: string
@@ -153,6 +154,57 @@ export function RideHistory({
     }
   }
 
+  const handleExportRide = async (rideId: string) => {
+    const { data: rows } = await supabase
+      .from('ride_points')
+      .select('*')
+      .eq('ride_id', rideId)
+      .order('point_index', { ascending: true })
+
+    if (!rows || rows.length === 0) return
+
+    const points: RidePoint[] = rows
+      .map((p): RidePoint | null => {
+        const loc = parseLocation(p.location)
+        if (!loc) return null
+        return {
+          id: String(p.id ?? ''),
+          ride_id: p.ride_id,
+          point_index: p.point_index as number,
+          location: loc,
+          recorded_at: p.recorded_at as string,
+          temperature: null,
+          humidity: null,
+          feels_like: null,
+          speed_kmh: null,
+          lux: null,
+          accel_x: null,
+          accel_y: null,
+          accel_z: null,
+        }
+      })
+      .filter((p): p is RidePoint => p !== null)
+
+    const ride = rides.find((r) => r.id === rideId)
+    const name = ride ? formatDate(ride.started_at) : 'ride'
+    downloadGPX(points, name)
+  }
+
+  const handleShareRide = (ride: Ride) => {
+    const dist = formatDistanceKm(ride.distance_m)
+    const dur = formatDurationMin(ride.duration_sec)
+    const temp = ride.weather_snapshot?.temperature
+    const text = temp
+      ? `I rode ${dist} in ${dur} at ${temp}°C on coolride`
+      : `I rode ${dist} in ${dur} on coolride`
+
+    if (navigator.share) {
+      navigator.share({ title: 'coolride — My Ride', text }).catch(() => {})
+    } else {
+      navigator.clipboard.writeText(text).catch(() => {})
+    }
+  }
+
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
@@ -210,14 +262,14 @@ export function RideHistory({
               return (
                 <div
                   key={ride.id}
-                  className="relative border border-gray-200 dark:border-zinc-800 rounded-lg overflow-hidden"
+                  className="bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg overflow-hidden"
                 >
                   <button
                     onClick={() => handleSelectRide(ride.id)}
-                    className="w-full text-left p-3"
+                    className="w-full text-left p-3.5"
                   >
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm font-medium text-gray-900 dark:text-zinc-100">
+                      <span className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
                         {formatDate(ride.started_at)}
                       </span>
                       {isActive && (
@@ -234,38 +286,80 @@ export function RideHistory({
                     <div className="text-xs text-gray-500 dark:text-zinc-400">
                       {formatTimeRange(ride.started_at, ride.ended_at)}
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
-                      {formatDistanceKm(ride.distance_m)} ·{' '}
-                      {formatDurationMin(ride.duration_sec)}
+                    <div className="text-sm font-medium text-gray-800 dark:text-zinc-200 mt-1">
+                      {formatDistanceKm(ride.distance_m)} · {formatDurationMin(ride.duration_sec)}
                     </div>
+                    {ride.weather_snapshot && (
+                      <div className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
+                        {ride.weather_snapshot.temperature}°C · {ride.weather_snapshot.description}
+                      </div>
+                    )}
                   </button>
 
-                  {/* Delete button — only for own rides */}
-                  {!isActive && isOwnRide && (
-                    <div className="px-3 pb-2">
-                      {isDeleting ? (
-                        <div className="flex items-center gap-2 text-xs">
-                          <span className="text-gray-600 dark:text-zinc-300">Delete this ride?</span>
+                  {!isActive && (
+                    <div className="flex border-t border-gray-200 dark:border-zinc-700 divide-x divide-gray-200 dark:divide-zinc-700">
+                      <button
+                        onClick={() => handleSelectRide(ride.id)}
+                        className="flex-1 py-2.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 flex items-center justify-center gap-1"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                        View
+                      </button>
+                      <button
+                        onClick={() => handleExportRide(ride.id)}
+                        className="flex-1 py-2.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 flex items-center justify-center gap-1"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                          <polyline points="7 10 12 15 17 10" />
+                          <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        Export
+                      </button>
+                      <button
+                        onClick={() => handleShareRide(ride)}
+                        className="flex-1 py-2.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 flex items-center justify-center gap-1"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="18" cy="5" r="3" />
+                          <circle cx="6" cy="12" r="3" />
+                          <circle cx="18" cy="19" r="3" />
+                          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                        </svg>
+                        Share
+                      </button>
+                      {isOwnRide && (
+                        isDeleting ? (
+                          <div className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs">
+                            <button
+                              onClick={() => handleDelete(ride.id)}
+                              className="text-red-600 dark:text-red-400 font-medium underline"
+                            >
+                              Yes
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirmId(null)}
+                              className="text-gray-500 dark:text-zinc-400 underline"
+                            >
+                              No
+                            </button>
+                          </div>
+                        ) : (
                           <button
-                            onClick={() => handleDelete(ride.id)}
-                            className="text-red-600 dark:text-red-400 underline"
+                            onClick={() => setDeleteConfirmId(ride.id)}
+                            className="flex-1 py-2.5 text-xs font-medium text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 flex items-center justify-center gap-1"
                           >
-                            Yes
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            </svg>
+                            Delete
                           </button>
-                          <button
-                            onClick={() => setDeleteConfirmId(null)}
-                            className="text-gray-500 dark:text-zinc-400 underline"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setDeleteConfirmId(ride.id)}
-                          className="text-xs text-red-500 dark:text-red-400 hover:underline"
-                        >
-                          Delete
-                        </button>
+                        )
                       )}
                     </div>
                   )}
