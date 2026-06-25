@@ -66,8 +66,10 @@ export function App() {
       return
     }
     supabase.from('user_roles').select('role').eq('user_id', userId).single()
-      .then(({ data }) => { setIsAdmin(data?.role === 'admin') })
-      .catch(() => { setIsAdmin(false) })
+      .then(
+        ({ data }) => { setIsAdmin(data?.role === 'admin') },
+        () => { setIsAdmin(false) }
+      )
   }, [userId])
 
   const handleStart = useCallback(async () => {
