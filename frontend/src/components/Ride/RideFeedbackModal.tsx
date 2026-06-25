@@ -17,7 +17,13 @@ function computeTimeOfDay(startedAt: string): string {
   return 'night'
 }
 
-function ScaleInput({
+const SCALE_OPTIONS = [
+  { label: 'Bad', value: 1 },
+  { label: 'Good', value: 3 },
+  { label: 'Ugly', value: 5 },
+] as const
+
+function TrayInput({
   label,
   subtitle,
   value,
@@ -37,18 +43,18 @@ function ScaleInput({
         {subtitle}
       </div>
       <div className="flex gap-2">
-        {[1, 2, 3, 4, 5].map((n) => (
+        {SCALE_OPTIONS.map((opt) => (
           <button
-            key={n}
+            key={opt.value}
             type="button"
-            onClick={() => onChange(n)}
-            className={`w-11 h-11 text-sm font-medium border ${
-              value === n
+            onClick={() => onChange(opt.value)}
+            className={`flex-1 py-2.5 text-sm font-medium border rounded-lg ${
+              value === opt.value
                 ? 'border-emerald-600 dark:border-emerald-400 bg-emerald-600 dark:bg-emerald-400 text-white dark:text-zinc-950'
-                : 'border-gray-200 dark:border-zinc-800 text-gray-900 dark:text-zinc-100'
+                : 'border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-zinc-300 hover:border-gray-300 dark:hover:border-zinc-700'
             }`}
           >
-            {n}
+            {opt.label}
           </button>
         ))}
       </div>
@@ -72,16 +78,17 @@ export function RideFeedbackModal({
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const canSubmit =
-    perceivedTemperature !== null &&
-    shadeQuality !== null &&
-    routePreference !== null &&
-    uvConcern !== null &&
-    hydrationLevel !== null &&
-    roadQuality !== null
+  const hasAnyField =
+    perceivedTemperature !== null ||
+    shadeQuality !== null ||
+    routePreference !== null ||
+    uvConcern !== null ||
+    hydrationLevel !== null ||
+    roadQuality !== null ||
+    additionalComments.trim() !== ''
 
   const handleSubmit = async () => {
-    if (!canSubmit) return
+    if (!hasAnyField) return
     setSubmitting(true)
     setError(null)
 
@@ -90,12 +97,12 @@ export function RideFeedbackModal({
     const feedback: Omit<RideFeedback, 'id' | 'submitted_at'> = {
       ride_id: rideId,
       user_id: userId,
-      perceived_temperature: perceivedTemperature,
-      shade_quality: shadeQuality,
-      route_preference: routePreference,
-      uv_concern: uvConcern,
-      hydration_level: hydrationLevel,
-      road_quality: roadQuality,
+      perceived_temperature: perceivedTemperature ?? 3,
+      shade_quality: shadeQuality ?? 3,
+      route_preference: routePreference ?? 'maybe',
+      uv_concern: uvConcern ?? 3,
+      hydration_level: hydrationLevel ?? 3,
+      road_quality: roadQuality ?? 3,
       time_of_day: timeOfDay,
       additional_comments: additionalComments || null,
     }
@@ -121,17 +128,28 @@ export function RideFeedbackModal({
   return (
     <div className="absolute inset-0 z-[1100] bg-white dark:bg-zinc-950 overflow-y-auto">
       <div className="max-w-sm mx-auto px-4 py-6">
-        <h2 className="text-lg font-medium text-gray-900 dark:text-zinc-100 mb-6">
-          Ride Feedback
-        </h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-medium text-gray-900 dark:text-zinc-100">
+            Ride Feedback
+          </h2>
+          <button
+            onClick={onSubmit}
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-500 dark:text-zinc-400"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
 
-        <ScaleInput
+        <TrayInput
           label="Perceived temperature"
           subtitle="How hot did it feel?"
           value={perceivedTemperature}
           onChange={setPerceivedTemperature}
         />
-        <ScaleInput
+        <TrayInput
           label="Shade quality"
           subtitle="How shaded was your route?"
           value={shadeQuality}
@@ -151,10 +169,10 @@ export function RideFeedbackModal({
                 key={opt}
                 type="button"
                 onClick={() => setRoutePreference(opt)}
-                className={`px-4 py-2 text-sm font-medium border capitalize ${
+                className={`flex-1 py-2.5 text-sm font-medium border rounded-lg capitalize ${
                   routePreference === opt
                     ? 'border-emerald-600 dark:border-emerald-400 bg-emerald-600 dark:bg-emerald-400 text-white dark:text-zinc-950'
-                    : 'border-gray-200 dark:border-zinc-800 text-gray-900 dark:text-zinc-100'
+                    : 'border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-zinc-300 hover:border-gray-300 dark:hover:border-zinc-700'
                 }`}
               >
                 {opt}
@@ -163,19 +181,19 @@ export function RideFeedbackModal({
           </div>
         </div>
 
-        <ScaleInput
+        <TrayInput
           label="UV concern"
           subtitle="How concerned about UV exposure?"
           value={uvConcern}
           onChange={setUvConcern}
         />
-        <ScaleInput
+        <TrayInput
           label="Hydration"
           subtitle="Did you feel adequately hydrated?"
           value={hydrationLevel}
           onChange={setHydrationLevel}
         />
-        <ScaleInput
+        <TrayInput
           label="Road quality"
           subtitle="How was the road surface?"
           value={roadQuality}
@@ -190,7 +208,7 @@ export function RideFeedbackModal({
             value={additionalComments}
             onChange={(e) => setAdditionalComments(e.target.value)}
             rows={2}
-            className="w-full border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 px-3 py-2 text-base outline-none focus:border-emerald-600 dark:focus:border-emerald-400 resize-none"
+            className="w-full border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 px-3 py-2 text-base outline-none focus:border-emerald-600 dark:focus:border-emerald-400 resize-none rounded-lg"
           />
         </div>
 
@@ -200,8 +218,8 @@ export function RideFeedbackModal({
 
         <button
           onClick={handleSubmit}
-          disabled={!canSubmit || submitting}
-          className="w-full bg-emerald-600 dark:bg-emerald-400 text-white dark:text-zinc-950 py-2 text-base font-medium disabled:opacity-50"
+          disabled={!hasAnyField || submitting}
+          className="w-full bg-emerald-600 dark:bg-emerald-400 text-white dark:text-zinc-950 py-3 text-sm font-medium rounded-lg disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {submitting ? 'Submitting...' : 'Submit Feedback'}
         </button>

@@ -153,9 +153,9 @@ export function UserProfile({
 
         <button
           onClick={onLogout}
-          className="w-full text-sm text-red-600 dark:text-red-400 underline text-left px-3 py-2"
+          className="w-full border border-red-200 dark:border-red-800 rounded-lg px-3 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950"
         >
-          Log out
+          Log Out
         </button>
       </div>
     </div>

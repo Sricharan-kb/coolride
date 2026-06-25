@@ -5,7 +5,7 @@ import { parseLocation } from '../../lib/geo'
 
 interface ExploreProps {
   userId: string
-  onSelectRide: (rideId: string, points: RidePoint[], route: [number, number][], rideName: string) => void
+  onSelectRide: (rideId: string, points: RidePoint[], route: [number, number][], rideName: string, sourceTab?: 'profile' | 'explore') => void
 }
 
 function formatDate(iso: string): string {
@@ -154,7 +154,7 @@ export function Explore({ userId, onSelectRide }: ExploreProps) {
         .filter(([lat, lng]) => typeof lat === 'number' && typeof lng === 'number')
 
       const rideDate = formatDate(ride.started_at)
-      onSelectRide(ride.id, points, route, rideDate)
+      onSelectRide(ride.id, points, route, rideDate, 'explore')
     } catch {
       setError('Something went wrong')
     }

@@ -38,6 +38,7 @@ export function App() {
     route: [number, number][]
     rideName: string
   } | null>(null)
+  const [pastRideSource, setPastRideSource] = useState<'profile' | 'explore'>('profile')
 
   // Post-ride summary card
   const [showSummary, setShowSummary] = useState(false)
@@ -122,23 +123,23 @@ export function App() {
   }, [recorder])
 
   const handleSelectPastRide = useCallback(
-    (rideId: string, points: RidePoint[], route: [number, number][], rideName?: string) => {
+    (rideId: string, points: RidePoint[], route: [number, number][], rideName?: string, sourceTab?: 'profile' | 'explore') => {
       setPastRide({ rideId, points, route, rideName: rideName || 'Ride' })
+      setPastRideSource(sourceTab || 'profile')
       setActiveTab('map')
     },
     []
   )
 
   const handleClosePastRide = useCallback(() => {
-    const wasFromExplore = pastRide?.rideName !== ''
     setPastRide(null)
-    if (wasFromExplore) {
+    if (pastRideSource === 'explore') {
       setActiveTab('explore')
     } else {
       setActiveTab('profile')
       setProfileView('rides')
     }
-  }, [pastRide])
+  }, [pastRideSource])
 
   if (authLoading) {
     return (
@@ -188,7 +189,7 @@ export function App() {
             ) : (
               <>
                 <RideMap
-                  currentPosition={recorder.position ? [recorder.position.lat, recorder.position.lng] : null}
+                  currentPosition={recorder.smoothedPosition ? [recorder.smoothedPosition.lat, recorder.smoothedPosition.lng] : null}
                   route={recorder.route}
                   isRiding={recorder.rideState === 'recording'}
                 />

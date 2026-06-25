@@ -71,12 +71,12 @@ export function RideSummaryCard({
         )}
 
         <div className="flex items-center justify-between mb-4 px-2 py-2 bg-gray-50 dark:bg-zinc-800 rounded">
-          <span className="text-sm text-gray-700 dark:text-zinc-300">
+          <span className="text-sm text-gray-700 dark:text-zinc-300 pr-2">
             Share this route publicly
           </span>
           <button
             onClick={onTogglePublic}
-            className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${
+            className={`relative w-10 h-5 rounded-full transition-colors duration-200 shrink-0 overflow-hidden ${
               isPublic ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-zinc-600'
             }`}
           >

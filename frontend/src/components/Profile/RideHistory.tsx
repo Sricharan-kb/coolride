@@ -10,7 +10,7 @@ interface RideHistoryProps {
   activeRideId: string | null
   isAdmin: boolean
   onBack: () => void
-  onSelectRide: (rideId: string, points: RidePoint[], route: [number, number][]) => void
+  onSelectRide: (rideId: string, points: RidePoint[], route: [number, number][], sourceTab?: 'profile' | 'explore') => void
 }
 
 function formatDate(iso: string): string {
@@ -135,7 +135,7 @@ export function RideHistory({
         .map((p) => [p.location.lat, p.location.lng] as [number, number])
         .filter(([lat, lng]) => typeof lat === 'number' && typeof lng === 'number')
 
-      onSelectRide(rideId, transformed, routeCoords)
+      onSelectRide(rideId, transformed, routeCoords, 'profile')
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       console.error('Failed to load ride points:', err)

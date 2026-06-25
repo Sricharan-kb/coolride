@@ -49,7 +49,7 @@ export function useRideRecorder({ userId }: UseRideRecorderArgs) {
   const [lastRideIsPublic, setLastRideIsPublic] = useState(false)
 
   const isTracking = rideState === 'recording'
-  const { position, error: geoError } = useGeolocation(isTracking)
+  const { position, smoothedPosition, error: geoError } = useGeolocation(isTracking)
   const { lux, acceleration } = useSensors(isTracking)
   const { weather, error: weatherError } = useWeather(
     isTracking && position ? position.lat : null,
@@ -216,7 +216,7 @@ export function useRideRecorder({ userId }: UseRideRecorderArgs) {
       avgAccelMagnitude = accelVals.reduce((s, v) => s + v, 0) / accelVals.length
     }
 
-    const isPublic = durationSec >= 300 && distanceM >= 1000
+    const isPublic = distanceM >= 1500
     const firstPoint = points.length > 0 ? points[0] : null
     const lastPoint = points.length > 0 ? points[points.length - 1] : null
 
@@ -353,6 +353,7 @@ export function useRideRecorder({ userId }: UseRideRecorderArgs) {
     rideState,
     rideId,
     position,
+    smoothedPosition,
     geoError,
     weather,
     weatherError,

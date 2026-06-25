@@ -8,21 +8,34 @@ interface GeolocationState {
 
 interface UseGeolocationReturn extends GeolocationState {
   isTracking: boolean
+  smoothedPosition: { lat: number; lng: number } | null
 }
+
+const SMOOTHING = 0.3
 
 export function useGeolocation(isTracking: boolean): UseGeolocationReturn {
   const [position, setPosition] = useState<{ lat: number; lng: number } | null>(null)
+  const [smoothedPosition, setSmoothedPosition] = useState<{ lat: number; lng: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [accuracy, setAccuracy] = useState<number | null>(null)
   const watchIdRef = useRef<number | null>(null)
+  const smoothRef = useRef<{ lat: number; lng: number } | null>(null)
 
   const handlePosition = useCallback((pos: GeolocationPosition) => {
-    setPosition({
-      lat: pos.coords.latitude,
-      lng: pos.coords.longitude,
-    })
+    const raw = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+    setPosition(raw)
     setAccuracy(pos.coords.accuracy)
     setError(null)
+
+    if (smoothRef.current === null) {
+      smoothRef.current = raw
+    } else {
+      smoothRef.current = {
+        lat: smoothRef.current.lat * (1 - SMOOTHING) + raw.lat * SMOOTHING,
+        lng: smoothRef.current.lng * (1 - SMOOTHING) + raw.lng * SMOOTHING,
+      }
+    }
+    setSmoothedPosition({ ...smoothRef.current })
   }, [])
 
   const handleError = useCallback((err: GeolocationPositionError) => {
@@ -60,5 +73,5 @@ export function useGeolocation(isTracking: boolean): UseGeolocationReturn {
     }
   }, [isTracking, handlePosition, handleError])
 
-  return { position, error, accuracy, isTracking }
+  return { position, smoothedPosition, error, accuracy, isTracking }
 }
