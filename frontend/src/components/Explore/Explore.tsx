@@ -117,12 +117,27 @@ export function Explore({ userId, onSelectRide }: ExploreProps) {
         .eq('ride_id', ride.id)
         .order('point_index', { ascending: true })
 
-      if (error || !data) return
+      if (error) {
+        console.error('Explore: ride_points fetch error:', error.message, error.code)
+        return
+      }
+
+      console.log('Explore: ride_points rows:', data?.length ?? 0, 'ride_id:', ride.id)
+
+      if (!data || data.length === 0) {
+        console.warn('Explore: no ride_points rows for ride', ride.id, '(RLS block or no data)')
+        return
+      }
+
+      console.log('Explore: raw location sample:', data[0]?.location)
 
       const points = data
         .map((p) => {
           const loc = parseLocation(p.location)
-          if (!loc) return null
+          if (!loc) {
+            console.warn('Explore: parse failed for point:', p.point_index, 'location:', p.location)
+            return null
+          }
 
           return {
             id: String(p.id ?? ''),
@@ -142,14 +157,21 @@ export function Explore({ userId, onSelectRide }: ExploreProps) {
         })
         .filter((p): p is RidePoint => p !== null)
 
+      console.log('Explore: parsed', points.length, 'of', data.length, 'points')
+
+      if (points.length === 0) {
+        console.error('Explore: all points failed to parse for ride', ride.id)
+        return
+      }
+
       const route = points
         .map((p) => [p.location.lat, p.location.lng] as [number, number])
         .filter(([lat, lng]) => typeof lat === 'number' && typeof lng === 'number')
 
       const rideDate = formatDate(ride.started_at)
       onSelectRide(ride.id, points, route, rideDate)
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error('Explore: handleSelectRide crashed:', err)
     }
   }
 
