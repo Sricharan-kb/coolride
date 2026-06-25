@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS user_roles (
 
 ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
 
--- Users can read their own role (safe: they see what they already have)
+DROP POLICY IF EXISTS "Users can read own role" ON user_roles;
 CREATE POLICY "Users can read own role" ON user_roles FOR SELECT
 USING (user_id = auth.uid());
 
@@ -47,6 +47,7 @@ USING (
 );
 
 -- Restore INSERT policy dropped by migration 003
+DROP POLICY IF EXISTS "Users can insert own ride points" ON ride_points;
 CREATE POLICY "Users can insert own ride points" ON ride_points FOR INSERT
 WITH CHECK (
     EXISTS (
