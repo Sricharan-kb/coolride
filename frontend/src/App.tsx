@@ -242,6 +242,7 @@ export function App() {
                     avgSpeedKmh={recorder.lastRideAvgSpeed}
                     weatherSnapshot={recorder.weather}
                     isPublic={sharePublic}
+                    showPublicToggle={recorder.lastRideDistanceKm >= 1.5}
                     onTogglePublic={handleTogglePublic}
                     onViewDetails={handleViewDetails}
                     onClose={handleCloseSummary}

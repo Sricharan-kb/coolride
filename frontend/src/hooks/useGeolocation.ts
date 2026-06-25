@@ -11,7 +11,7 @@ interface UseGeolocationReturn extends GeolocationState {
   smoothedPosition: { lat: number; lng: number } | null
 }
 
-const SMOOTHING = 0.3
+const SMOOTHING = 0.15
 
 export function useGeolocation(isTracking: boolean): UseGeolocationReturn {
   const [position, setPosition] = useState<{ lat: number; lng: number } | null>(null)

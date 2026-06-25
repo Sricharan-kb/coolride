@@ -6,6 +6,7 @@ interface RideSummaryCardProps {
   avgSpeedKmh: number
   weatherSnapshot: WeatherData | null
   isPublic: boolean
+  showPublicToggle: boolean
   onTogglePublic: () => void
   onViewDetails: () => void
   onClose: () => void
@@ -23,6 +24,7 @@ export function RideSummaryCard({
   avgSpeedKmh,
   weatherSnapshot,
   isPublic,
+  showPublicToggle,
   onTogglePublic,
   onViewDetails,
   onClose,
@@ -70,6 +72,7 @@ export function RideSummaryCard({
           </div>
         )}
 
+        {showPublicToggle && (
         <div className="flex items-center justify-between mb-4 px-2 py-2 bg-gray-50 dark:bg-zinc-800 rounded">
           <span className="text-sm text-gray-700 dark:text-zinc-300 pr-2">
             Share this route publicly
@@ -87,6 +90,7 @@ export function RideSummaryCard({
             />
           </button>
         </div>
+        )}
 
         <div className="flex gap-3">
           <button

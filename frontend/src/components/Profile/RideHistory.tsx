@@ -262,7 +262,7 @@ export function RideHistory({
               return (
                 <div
                   key={ride.id}
-                  className="bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg overflow-hidden"
+                  className="relative bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg overflow-hidden"
                 >
                   <button
                     onClick={() => handleSelectRide(ride.id)}
@@ -334,19 +334,27 @@ export function RideHistory({
                       </button>
                       {isOwnRide && (
                         isDeleting ? (
-                          <div className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs">
-                            <button
-                              onClick={() => handleDelete(ride.id)}
-                              className="text-red-600 dark:text-red-400 font-medium underline"
-                            >
-                              Yes
-                            </button>
-                            <button
-                              onClick={() => setDeleteConfirmId(null)}
-                              className="text-gray-500 dark:text-zinc-400 underline"
-                            >
-                              No
-                            </button>
+                          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-gray-50/95 dark:bg-zinc-900/95 rounded-lg gap-2 p-4">
+                            <p className="text-sm font-medium text-gray-900 dark:text-zinc-100">
+                              Delete this ride?
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-zinc-400">
+                              This action cannot be undone.
+                            </p>
+                            <div className="flex gap-3 mt-1">
+                              <button
+                                onClick={() => setDeleteConfirmId(null)}
+                                className="px-6 py-2 text-sm font-medium text-gray-700 dark:text-zinc-300 bg-gray-200 dark:bg-zinc-700 rounded-lg hover:bg-gray-300 dark:hover:bg-zinc-600"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={() => handleDelete(ride.id)}
+                                className="px-6 py-2 text-sm font-medium text-white bg-red-600 dark:bg-red-400 dark:text-zinc-950 rounded-lg hover:bg-red-700 dark:hover:bg-red-500"
+                              >
+                                Delete
+                              </button>
+                            </div>
                           </div>
                         ) : (
                           <button
