@@ -100,22 +100,16 @@ export function RideHistory({
         .order('point_index', { ascending: true })
 
       if (error) {
-        setError('Failed to load ride points: ' + error.message)
-        return
-      }
-      if (!data || data.length === 0) {
-        setError('No GPS points found for this ride.')
+        setError('Failed to load ride points')
         return
       }
 
-      // Debug: log first raw location
-      console.log('Raw location sample:', data[0]?.location)
+      const rows = data ?? []
 
-      const transformed: RidePoint[] = data
+      const transformed: RidePoint[] = rows
         .map((p): RidePoint | null => {
           const loc = parseLocation(p.location)
           if (!loc || typeof p.ride_id !== 'string' || typeof p.point_index !== 'number' || typeof p.recorded_at !== 'string') {
-            console.warn('Failed to parse point:', p.point_index, 'location:', p.location)
             return null
           }
           return {
@@ -135,13 +129,6 @@ export function RideHistory({
           }
         })
         .filter((p): p is RidePoint => p !== null)
-
-      console.log('Transformed points:', transformed.length, 'of', data.length)
-
-      if (transformed.length === 0) {
-        setError('Could not parse GPS points. Check console for details.')
-        return
-      }
 
       const routeCoords: [number, number][] = transformed
         .map((p) => [p.location.lat, p.location.lng] as [number, number])

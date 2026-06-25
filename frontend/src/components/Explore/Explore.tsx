@@ -120,28 +120,16 @@ export function Explore({ userId, onSelectRide }: ExploreProps) {
         .order('point_index', { ascending: true })
 
       if (error) {
-        console.error('Explore: ride_points fetch error:', error.message, error.code)
-        setError('Failed to load ride data: ' + error.message)
+        setError('Failed to load ride data')
         return
       }
 
-      console.log('Explore: ride_points rows:', data?.length ?? 0, 'ride_id:', ride.id)
+      const rows = data ?? []
 
-      if (!data || data.length === 0) {
-        console.warn('Explore: no ride_points rows for ride', ride.id, '(RLS block or no data)')
-        setError('No GPS data stored for this ride. Was it recorded after the schema fix?')
-        return
-      }
-
-      console.log('Explore: raw location sample:', data[0]?.location)
-
-      const points = data
+      const points = rows
         .map((p) => {
           const loc = parseLocation(p.location)
-          if (!loc) {
-            console.warn('Explore: parse failed for point:', p.point_index, 'location:', p.location)
-            return null
-          }
+          if (!loc) return null
 
           return {
             id: String(p.id ?? ''),
@@ -161,23 +149,14 @@ export function Explore({ userId, onSelectRide }: ExploreProps) {
         })
         .filter((p): p is RidePoint => p !== null)
 
-      console.log('Explore: parsed', points.length, 'of', data.length, 'points')
-
-      if (points.length === 0) {
-        console.error('Explore: all points failed to parse for ride', ride.id)
-        setError('Could not parse GPS data for this ride. Check console for details.')
-        return
-      }
-
       const route = points
         .map((p) => [p.location.lat, p.location.lng] as [number, number])
         .filter(([lat, lng]) => typeof lat === 'number' && typeof lng === 'number')
 
       const rideDate = formatDate(ride.started_at)
       onSelectRide(ride.id, points, route, rideDate)
-    } catch (err) {
-      console.error('Explore: handleSelectRide crashed:', err)
-      setError('Something went wrong loading this ride. Check console for details.')
+    } catch {
+      setError('Something went wrong')
     }
   }
 
