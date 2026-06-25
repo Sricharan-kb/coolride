@@ -59,3 +59,31 @@ WITH CHECK (
 -- Hide PostGIS spatial_ref_sys from API
 -- ============================================================
 REVOKE ALL ON spatial_ref_sys FROM anon, authenticated;
+
+-- ============================================================
+-- Backfill ride_points for rides recorded during INSERT policy gap
+-- ============================================================
+WITH rides_to_fill AS (
+    SELECT
+        r.id,
+        r.start_lat,
+        r.start_lng,
+        r.end_lat,
+        r.end_lng,
+        r.started_at,
+        r.ended_at,
+        (r.weather_snapshot->>'temperature')::double precision AS temp,
+        (r.weather_snapshot->>'humidity')::double precision AS humidity,
+        (r.weather_snapshot->>'feels_like')::double precision AS feels_like
+    FROM rides r
+    WHERE r.start_lat IS NOT NULL
+      AND r.start_lng IS NOT NULL
+      AND NOT EXISTS (SELECT 1 FROM ride_points rp WHERE rp.ride_id = r.id)
+)
+INSERT INTO ride_points (ride_id, point_index, location, recorded_at, temperature, humidity, feels_like)
+SELECT id, 0, ST_GeographyFromText('POINT(' || start_lng || ' ' || start_lat || ')'), started_at, temp, humidity, feels_like
+FROM rides_to_fill
+UNION ALL
+SELECT id, 1, ST_GeographyFromText('POINT(' || end_lng || ' ' || end_lat || ')'), ended_at, NULL, NULL, NULL
+FROM rides_to_fill
+WHERE end_lat IS NOT NULL AND end_lng IS NOT NULL AND ended_at IS NOT NULL;
