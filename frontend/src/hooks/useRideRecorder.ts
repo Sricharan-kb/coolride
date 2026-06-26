@@ -220,29 +220,61 @@ export function useRideRecorder({ userId }: UseRideRecorderArgs) {
     const firstPoint = points.length > 0 ? points[0] : null
     const lastPoint = points.length > 0 ? points[points.length - 1] : null
 
-    const { error: updateError } = await supabase
+    const sensorData = {
+      avg_lux: avgLux,
+      lux_std_dev: luxStdDev,
+      shade_profile: shadeProfile,
+      avg_accel_magnitude: avgAccelMagnitude,
+    }
+
+    const routeCoords = routeRef.current as [number, number][]
+    let routeWkt: string | null = null
+    if (routeCoords.length >= 2) {
+      const wktCoords = routeCoords.map(([lat, lng]) => `${lng} ${lat}`).join(', ')
+      routeWkt = `LINESTRING(${wktCoords})`
+    }
+
+    if (routeWkt) {
+      const { error: rpcError } = await supabase.rpc('update_ride_route', {
+        p_ride_id: rideId,
+        p_route_wkt: routeWkt,
+        p_distance_m: distanceM,
+        p_duration_sec: durationSec,
+        p_weather_snapshot: lastWeatherRef.current ?? {},
+        p_sensor_data: sensorData,
+        p_ended_at: endedAt,
+      })
+      if (rpcError) {
+        console.error('Failed to persist route via RPC:', rpcError.message)
+      }
+    } else {
+      const { error: fallbackError } = await supabase
+        .from('rides')
+        .update({
+          ended_at: endedAt,
+          distance_m: distanceM,
+          duration_sec: durationSec,
+          weather_snapshot: lastWeatherRef.current ?? {},
+          sensor_data: sensorData,
+        })
+        .eq('id', rideId)
+      if (fallbackError) {
+        console.error('Failed to update ride:', fallbackError.message)
+      }
+    }
+
+    const { error: extraError } = await supabase
       .from('rides')
       .update({
-        ended_at: endedAt,
-        distance_m: distanceM,
-        duration_sec: durationSec,
         is_public: isPublic,
         start_lat: firstPoint?.lat ?? null,
         start_lng: firstPoint?.lng ?? null,
         end_lat: lastPoint?.lat ?? null,
         end_lng: lastPoint?.lng ?? null,
-        weather_snapshot: lastWeatherRef.current,
-        sensor_data: {
-          avg_lux: avgLux,
-          lux_std_dev: luxStdDev,
-          shade_profile: shadeProfile,
-          avg_accel_magnitude: avgAccelMagnitude,
-        },
       })
       .eq('id', rideId)
-
-    if (updateError) {
-      console.error('Failed to update ride:', updateError.message)
+    if (extraError) {
+      console.error('Failed to update ride extras:', extraError.message)
     }
 
     const ridePoints = points.map((p, i) => ({
@@ -267,7 +299,6 @@ export function useRideRecorder({ userId }: UseRideRecorderArgs) {
       }
     }
 
-    const routeCoords = routeRef.current as [number, number][]
     setTimelinePoints(
       points.map((p, i) => ({
         id: '',

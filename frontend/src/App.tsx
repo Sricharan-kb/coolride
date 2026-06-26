@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './lib/supabase'
 import type { RidePoint } from './types/index'
 import { LoginForm } from './components/Auth/LoginForm'
-import { RegisterForm } from './components/Auth/RegisterForm'
 import { RideMap } from './components/Map/RideMap'
 import { RideControls } from './components/Ride/RideControls'
 import { LiveStats } from './components/Ride/LiveStats'
@@ -17,12 +16,10 @@ import { useRideRecorder } from './hooks/useRideRecorder'
 
 type Tab = 'map' | 'explore' | 'profile'
 type ProfileView = 'profile' | 'rides'
-type AuthView = 'login' | 'register'
 
 export function App() {
   const [authLoading, setAuthLoading] = useState(true)
   const [session, setSession] = useState<{ user: { id: string; email: string } } | null>(null)
-  const [authView, setAuthView] = useState<AuthView>('login')
   const [activeTab, setActiveTab] = useState<Tab>('map')
   const [profileView, setProfileView] = useState<ProfileView>('profile')
   const [isDark, setIsDark] = useState(
@@ -66,7 +63,7 @@ export function App() {
       setIsAdmin(false)
       return
     }
-    supabase.from('user_roles').select('role').eq('user_id', userId).single()
+    supabase.from('user_roles').select('role').eq('user_id', userId).maybeSingle()
       .then(
         ({ data }) => { setIsAdmin(data?.role === 'admin') },
         () => { setIsAdmin(false) }
@@ -152,11 +149,7 @@ export function App() {
   if (!session) {
     return (
       <div className="h-[100dvh] bg-white dark:bg-zinc-950 flex flex-col items-center justify-center px-4">
-        {authView === 'login' ? (
-          <LoginForm onSwitchToRegister={() => setAuthView('register')} />
-        ) : (
-          <RegisterForm onSwitchToLogin={() => setAuthView('login')} />
-        )}
+        <LoginForm />
       </div>
     )
   }

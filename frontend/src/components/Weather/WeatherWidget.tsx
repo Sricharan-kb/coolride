@@ -28,7 +28,7 @@ export function WeatherWidget({
       <div className="flex items-center gap-2">
         {icon && (
           <img
-            src={`https:${icon}`}
+            src={icon.startsWith('//') ? `https:${icon}` : icon}
             alt={description ?? ''}
             className="w-8 h-8"
           />

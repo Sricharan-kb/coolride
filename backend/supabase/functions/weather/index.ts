@@ -3,11 +3,13 @@
 //
 // CORS is inlined (not in _shared/) because this is deployed via the Supabase
 // Dashboard editor, which is single-file and can't resolve a sibling import.
+
 const WEATHERAPI_KEY = Deno.env.get("WEATHERAPI_KEY");
 const WEATHERAPI_BASE = "https://api.weatherapi.com/v1/current.json";
+const ALLOWED_ORIGIN = Deno.env.get("ALLOWED_ORIGIN") || "https://coolride.vercel.app";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers":
     "Content-Type, Authorization, apikey, x-client-info, x-client-info-2",
@@ -21,14 +23,36 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
+function isJwtExpired(token: string): boolean {
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return true;
+    const decoded = JSON.parse(atob(payload));
+    const now = Math.floor(Date.now() / 1000);
+    return typeof decoded.exp === "number" && decoded.exp < now;
+  } catch {
+    return true;
+  }
+}
+
 Deno.serve(async (req: Request) => {
-  // CORS preflight — must return CORS headers so the browser allows the POST.
+  // CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   if (req.method !== "POST") {
     return new Response(null, { status: 204, headers: corsHeaders });
+  }
+
+  // JWT verification — block unauthenticated requests to protect WeatherAPI quota
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return json({ error: "Unauthorized" }, 401);
+  }
+  const token = authHeader.slice(7);
+  if (isJwtExpired(token)) {
+    return json({ error: "Token expired" }, 401);
   }
 
   let body: { lat?: number; lon?: number } = {};
