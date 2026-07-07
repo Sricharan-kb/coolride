@@ -190,6 +190,12 @@ export function RideHistory({
     downloadGPX(points, name)
   }
 
+  const handleTogglePublic = async (rideId: string, current: boolean) => {
+    const newVal = !current
+    setRides((prev) => prev.map((r) => (r.id === rideId ? { ...r, is_public: newVal } : r)))
+    await supabase.from('rides').update({ is_public: newVal }).eq('id', rideId)
+  }
+
   const handleShareRide = (ride: Ride) => {
     const dist = formatDistanceKm(ride.distance_m)
     const dur = formatDurationMin(ride.duration_sec)
@@ -277,10 +283,17 @@ export function RideHistory({
                           LIVE
                         </span>
                       )}
-                      {(ride as Ride & { is_public: boolean }).is_public && (
-                        <span className="text-xs text-gray-500 dark:text-zinc-400 border border-gray-300 dark:border-zinc-600 px-1.5 py-0.5 rounded-full">
-                          public
-                        </span>
+                      {ride.distance_m != null && ride.distance_m >= 1500 && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleTogglePublic(ride.id, ride.is_public) }}
+                          className={`text-xs font-medium px-1.5 py-0.5 rounded-full border transition-colors ${
+                            ride.is_public
+                              ? 'text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700'
+                              : 'text-gray-500 dark:text-zinc-400 border-gray-300 dark:border-zinc-600'
+                          }`}
+                        >
+                          {ride.is_public ? 'public' : 'private'}
+                        </button>
                       )}
                     </div>
                     <div className="text-xs text-gray-500 dark:text-zinc-400">
