@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sensor Check — coolride</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font: 14px/1.5 system-ui; background: #0A0A0A; color: #F3F4F6; padding: 24px 16px; max-width: 480px; margin: 0 auto; }
+  h1 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+  .sub { color: #9CA3AF; font-size: 13px; margin-bottom: 24px; }
+  .card { background: #1A1A1A; border: 1px solid #1F2937; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+  .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .card-name { font-weight: 600; font-size: 15px; }
+  .badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
+  .badge-ok { background: #064E3B; color: #34D399; }
+  .badge-fail { background: #7F1D1D; color: #F87171; }
+  .badge-checking { background: #78350F; color: #FBBF24; }
+  .val { font-family: 'SF Mono', 'Cascadia Code', monospace; font-size: 13px; color: #9CA3AF; }
+  .val strong { color: #F3F4F6; }
+  .err { font-size: 12px; color: #F87171; margin-top: 4px; }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<h1>Sensor Check</h1>
+<p class="sub">coolride — open this page on your phone (or click "Request permission" on iOS)</p>
+
+<div id="geo" class="card">
+  <div class="card-header"><span class="card-name">GPS / Geolocation</span><span class="badge badge-checking">checking…</span></div>
+  <div class="val" id="geo-val"></div>
+  <div class="err" id="geo-err"></div>
+</div>
+
+<div id="als" class="card">
+  <div class="card-header"><span class="card-name">ALS (light sensor)</span><span class="badge badge-checking">checking…</span></div>
+  <div class="val" id="als-val"></div>
+  <div class="err" id="als-err"></div>
+</div>
+
+<div id="accel" class="card">
+  <div class="card-header"><span class="card-name">Accelerometer</span><span class="badge badge-checking">checking…</span></div>
+  <div class="val" id="accel-val"></div>
+  <div class="err" id="accel-err"></div>
+</div>
+
+<script>
+function setOk(id, text) {
+  const el = document.getElementById(id);
+  const badge = el.querySelector('.badge');
+  badge.textContent = 'working';
+  badge.className = 'badge badge-ok';
+  el.querySelector('.val').innerHTML = text;
+}
+function setFail(id, reason) {
+  const el = document.getElementById(id);
+  const badge = el.querySelector('.badge');
+  badge.textContent = 'unavailable';
+  badge.className = 'badge badge-fail';
+  el.querySelector('.err').textContent = reason;
+}
+
+// Geolocation
+if ('geolocation' in navigator) {
+  navigator.geolocation.getCurrentPosition(
+    (pos) => setOk('geo', `<strong>${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}</strong> &plusmn; ${pos.coords.accuracy.toFixed(1)}m`),
+    (err) => setFail('geo', err.message),
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+} else {
+  setFail('geo', 'navigator.geolocation not available');
+}
+
+// AmbientLightSensor
+try {
+  const sensor = new AmbientLightSensor({ frequency: 1 });
+  sensor.addEventListener('reading', () => {
+    setOk('als', `<strong>${sensor.illuminance}</strong> lux`);
+  });
+  sensor.addEventListener('error', (e) => {
+    setFail('als', e?.error?.message || 'sensor error');
+  });
+  sensor.start();
+} catch {
+  if (window.matchMedia) {
+    if (window.matchMedia('(light-level: dim)').matches) setOk('als', '<strong>~50</strong> lux (CSS fallback: dim)');
+    else if (window.matchMedia('(light-level: normal)').matches) setOk('als', '<strong>~750</strong> lux (CSS fallback: normal)');
+    else if (window.matchMedia('(light-level: washed)').matches) setOk('als', '<strong>~3000</strong> lux (CSS fallback: washed)');
+    else setFail('als', 'AmbientLightSensor not supported, CSS light-level gave no match');
+  } else {
+    setFail('als', 'AmbientLightSensor not supported');
+  }
+}
+
+// DeviceMotion
+const accelEl = document.getElementById('accel');
+const reqPerm = typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function';
+
+function listenAccel() {
+  setOk('accel', 'waiting for motion…');
+  window.addEventListener('devicemotion', (e) => {
+    const a = e.acceleration;
+    if (a && a.x != null) {
+      setOk('accel', 'x: <strong>' + a.x.toFixed(2) + '</strong>  y: <strong>' + a.y.toFixed(2) + '</strong>  z: <strong>' + a.z.toFixed(2) + '</strong> m/s²');
+    }
+  });
+}
+
+if (reqPerm) {
+  const btn = document.createElement('button');
+  btn.textContent = 'Request permission';
+  btn.style.cssText = 'margin-top:8px;padding:6px 12px;border:1px solid #1F2937;border-radius:6px;background:#1A1A1A;color:#F3F4F6;cursor:pointer;font-size:13px;';
+  btn.onclick = () => {
+    DeviceMotionEvent.requestPermission()
+      .then((s) => { if (s === 'granted') listenAccel(); else setFail('accel', 'permission denied'); })
+      .catch((e) => setFail('accel', e.message));
+  };
+  accelEl.querySelector('.badge').textContent = 'needs tap';
+  accelEl.querySelector('.badge').className = 'badge badge-checking';
+  accelEl.querySelector('.val').textContent = '';
+  accelEl.appendChild(btn);
+} else {
+  listenAccel();
+}
+</script>
+</body>
+</html>
