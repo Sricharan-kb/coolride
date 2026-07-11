@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import { Capacitor } from '@capacitor/core'
+import { AlsPlugin } from '../capacitor/als-plugin'
 
 interface SensorState {
   lux: number | null
@@ -20,10 +22,24 @@ export function useSensors(isTracking: boolean): SensorState {
   useEffect(() => {
     if (!isTracking) return
 
+    if (Capacitor.isNativePlatform()) {
+      AlsPlugin.start().then(() => {
+        setAlsSupported(true)
+      }).catch(() => {
+        setAlsSupported(false)
+      })
+      const handle = AlsPlugin.addListener('luxChanged', (data: { lux: number }) => {
+        setLux(data.lux)
+      })
+      return () => {
+        AlsPlugin.stop()
+        handle.remove()
+      }
+    }
+
     let alsCleanup: (() => void) | undefined
 
     try {
-      // TODO(NOTE): Type cast chain for AmbientLightSensor — consider a typed wrapper or @types/ambient-light-sensor if available
       const sensor = new (window as unknown as { AmbientLightSensor: new (opts?: { frequency?: number }) => { addEventListener: (e: string, cb: () => void) => void; start: () => void; stop: () => void } }).AmbientLightSensor({ frequency: 1 })
       sensor.addEventListener('reading', () => {
         const illuminance = (sensor as unknown as { illuminance: number }).illuminance
@@ -34,16 +50,6 @@ export function useSensors(isTracking: boolean): SensorState {
       alsCleanup = () => sensor.stop()
     } catch {
       setAlsSupported(false)
-      // Fallback: light-level CSS media query (Safari iOS 16.5+, Chrome Android 95+)
-      if (window.matchMedia) {
-        if (window.matchMedia('(light-level: dim)').matches) {
-          setLux(50)
-        } else if (window.matchMedia('(light-level: normal)').matches) {
-          setLux(750)
-        } else if (window.matchMedia('(light-level: washed)').matches) {
-          setLux(3000)
-        }
-      }
     }
 
     return () => {
