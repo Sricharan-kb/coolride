@@ -81,14 +81,11 @@ try {
     setFail('als', e?.error?.message || 'sensor error');
   });
   sensor.start();
-} catch {
-  if (window.matchMedia) {
-    if (window.matchMedia('(light-level: dim)').matches) setOk('als', '<strong>~50</strong> lux (CSS fallback: dim)');
-    else if (window.matchMedia('(light-level: normal)').matches) setOk('als', '<strong>~750</strong> lux (CSS fallback: normal)');
-    else if (window.matchMedia('(light-level: washed)').matches) setOk('als', '<strong>~3000</strong> lux (CSS fallback: washed)');
-    else setFail('als', 'AmbientLightSensor not supported, CSS light-level gave no match');
+} catch (e) {
+  if ('AmbientLightSensor' in window) {
+    setFail('als', 'sensor error: ' + (e.message || e));
   } else {
-    setFail('als', 'AmbientLightSensor not supported');
+    setFail('als', 'AmbientLightSensor API not available in this browser');
   }
 }
 
