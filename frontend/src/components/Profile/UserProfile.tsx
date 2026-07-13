@@ -5,6 +5,7 @@ interface UserProfileProps {
   userId: string
   email: string
   isDark: boolean
+  isAdmin: boolean
   onToggleDarkMode: () => void
   onLogout: () => void
   onViewRideHistory: () => void

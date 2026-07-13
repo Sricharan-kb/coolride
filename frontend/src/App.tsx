@@ -170,6 +170,7 @@ export function App() {
                 onClose={handleClosePastRide}
                 title={pastRide.rideName}
                 rideName={pastRide.rideName}
+                isAdmin={isAdmin}
               />
             ) : /* Mode: Post-ride timeline */ recorder.showTimeline && recorder.timelinePoints && recorder.timelineRoute ? (
               <RideTimeline
@@ -178,6 +179,7 @@ export function App() {
                 onClose={recorder.closeTimeline}
                 title="Ride Summary"
                 rideName="ride"
+                isAdmin={isAdmin}
               />
             ) : (
               <>
@@ -251,6 +253,7 @@ export function App() {
           <div className="h-full overflow-y-auto">
             <Explore
               userId={userId}
+              isAdmin={isAdmin}
               onSelectRide={(rideId, points, route, rideName) =>
                 handleSelectPastRide(rideId, points, route, rideName)
               }
@@ -277,6 +280,7 @@ export function App() {
                 userId={userId}
                 email={session?.user?.email ?? ''}
                 isDark={isDark}
+                isAdmin={isAdmin}
                 onToggleDarkMode={handleToggleDarkMode}
                 onLogout={handleLogout}
                 onViewRideHistory={() => setProfileView('rides')}
