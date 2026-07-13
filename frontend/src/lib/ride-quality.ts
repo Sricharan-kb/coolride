@@ -8,6 +8,7 @@ export interface RoughPoint {
   jounce: number
   roughness: number
   label: string
+  distanceKm: number
 }
 
 const JERK_BAD = 3.0
@@ -68,6 +69,7 @@ export function findRoughPoints(
     }
   }
 
+  let cumDist = 0
   for (let i = 1; i < jerks.length; i++) {
     const dt =
       (new Date(valid[i].recorded_at).getTime() -
@@ -75,6 +77,18 @@ export function findRoughPoints(
       1000
     const jounce = dt > 0 ? Math.abs(jerks[i] - jerks[i - 1]) / dt : 0
     const roughness = computeRoughness(jerks[i], jounce)
+
+    const p = valid[i]
+    const prev = valid[i - 1]
+    const dlng = ((p.location.lng - prev.location.lng) * Math.PI) / 180
+    const dlat = ((p.location.lat - prev.location.lat) * Math.PI) / 180
+    const a =
+      Math.sin(dlat / 2) ** 2 +
+      Math.cos((prev.location.lat * Math.PI) / 180) *
+        Math.cos((p.location.lat * Math.PI) / 180) *
+        Math.sin(dlng / 2) ** 2
+    cumDist += 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+
     if (roughness >= threshold) {
       results.push({
         index: points.indexOf(valid[i]),
@@ -84,6 +98,7 @@ export function findRoughPoints(
         jounce: Math.round(jounce * 100) / 100,
         roughness: Math.round(roughness * 10) / 10,
         label: classifyRoughness(roughness),
+        distanceKm: cumDist / 1000,
       })
     }
   }
