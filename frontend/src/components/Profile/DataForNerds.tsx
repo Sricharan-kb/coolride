@@ -4,7 +4,6 @@ import { parseLocation } from '../../lib/geo'
 import type { Ride, RidePoint } from '../../types/index'
 import { AccelGraph } from '../Ride/AccelGraph'
 import { RoughPointMarkers } from '../Ride/RoughPointMarkers'
-import { RoadQualitySummary } from '../Ride/RoadQualitySummary'
 import { ChennaiHeatmap } from '../Explore/ChennaiHeatmap'
 
 interface DataForNerdsProps {
@@ -180,9 +179,13 @@ export function DataForNerds({ onBack }: DataForNerdsProps) {
 
                 {hasAccel && (
                   <div className="space-y-3">
-                    <RoadQualitySummary points={points} />
                     <AccelGraph points={points} />
-                    <RoughPointMarkers points={points} />
+                    <RoughPointMarkers
+                      points={points}
+                      rideName={formatDate(
+                        rides.find((r) => r.id === selectedRideId)?.started_at ?? '',
+                      )}
+                    />
                   </div>
                 )}
               </>

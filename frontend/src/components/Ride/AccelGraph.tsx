@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import type { RidePoint } from '../../types/index'
-import { computeAccelSeries, findRoughPoints } from '../../lib/ride-quality'
+import { computeAccelSeries, findJerkPoints } from '../../lib/ride-quality'
 
 interface AccelGraphProps {
   points: RidePoint[]
@@ -36,8 +36,8 @@ export function AccelGraph({ points }: AccelGraphProps) {
     [points],
   )
 
-  const roughPoints = useMemo(
-    () => findRoughPoints(points, 2).sort((a, b) => b.jerk - a.jerk),
+  const jerkPoints = useMemo(
+    () => findJerkPoints(points, 1.0),
     [points],
   )
 
@@ -55,6 +55,9 @@ export function AccelGraph({ points }: AccelGraphProps) {
 
   return (
     <div className="mx-1 mb-2">
+      <div className="text-xs font-medium text-gray-600 dark:text-zinc-300 mb-1">
+        Accelerometer (m/s²) over distance
+      </div>
       <svg
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         className="w-full"
@@ -113,28 +116,19 @@ export function AccelGraph({ points }: AccelGraphProps) {
         <path d={svgPath(accelY, distanceKm, maxX)} fill="none" stroke={COLORS.y} strokeWidth={1} />
         <path d={svgPath(accelZ, distanceKm, maxX)} fill="none" stroke={COLORS.z} strokeWidth={1} />
 
-        {roughPoints.map((rp) => {
-          const x = PADDING.left + (rp.distanceKm / maxX) * PLOT_W
+        {jerkPoints.map((jp) => {
+          const x = PADDING.left + (jp.distanceKm / maxX) * PLOT_W
           return (
-            <g key={rp.index}>
-              <line
-                x1={x}
-                y1={PADDING.top}
-                x2={x}
-                y2={PADDING.top + PLOT_H}
-                stroke={rp.roughness >= 3 ? '#ef4444' : '#eab308'}
-                strokeWidth={0.5}
-                strokeDasharray="2,2"
-              />
-              <text
-                x={x + 3}
-                y={PADDING.top + 8}
-                fontSize={7}
-                fill={rp.roughness >= 3 ? '#ef4444' : '#eab308'}
-              >
-                {rp.label} {rp.distanceKm.toFixed(2)}km
-              </text>
-            </g>
+            <line
+              key={jp.index}
+              x1={x}
+              y1={PADDING.top}
+              x2={x}
+              y2={PADDING.top + PLOT_H}
+              stroke="#ef4444"
+              strokeWidth={0.5}
+              strokeDasharray="2,2"
+            />
           )
         })}
 

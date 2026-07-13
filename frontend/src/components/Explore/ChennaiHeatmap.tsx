@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { parseLocation } from '../../lib/geo'
-import { findRoughPoints } from '../../lib/ride-quality'
+import { findJerkPoints } from '../../lib/ride-quality'
 import type { RidePoint } from '../../types/index'
 
 interface ChennaiHeatmapProps {
@@ -63,7 +63,7 @@ export function ChennaiHeatmap({ visible }: ChennaiHeatmapProps) {
           }
         }
 
-        const rough = findRoughPoints(allPoints, 1)
+        const rough = findJerkPoints(allPoints, 1.0)
         setCount(rough.length)
       } catch {
         if (!cancelled) setCount(0)
