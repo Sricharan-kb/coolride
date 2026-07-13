@@ -12,10 +12,11 @@ import { RideSummaryCard } from './components/Ride/RideSummaryCard'
 import { RideHistory } from './components/Profile/RideHistory'
 import { UserProfile } from './components/Profile/UserProfile'
 import { Explore } from './components/Explore/Explore'
+import { DataForNerds } from './components/Profile/DataForNerds'
 import { useRideRecorder } from './hooks/useRideRecorder'
 
 type Tab = 'map' | 'explore' | 'profile'
-type ProfileView = 'profile' | 'rides'
+type ProfileView = 'profile' | 'rides' | 'nerds'
 
 export function App() {
   const [authLoading, setAuthLoading] = useState(true)
@@ -170,7 +171,6 @@ export function App() {
                 onClose={handleClosePastRide}
                 title={pastRide.rideName}
                 rideName={pastRide.rideName}
-                isAdmin={isAdmin}
               />
             ) : /* Mode: Post-ride timeline */ recorder.showTimeline && recorder.timelinePoints && recorder.timelineRoute ? (
               <RideTimeline
@@ -179,7 +179,6 @@ export function App() {
                 onClose={recorder.closeTimeline}
                 title="Ride Summary"
                 rideName="ride"
-                isAdmin={isAdmin}
               />
             ) : (
               <>
@@ -253,7 +252,6 @@ export function App() {
           <div className="h-full overflow-y-auto">
             <Explore
               userId={userId}
-              isAdmin={isAdmin}
               onSelectRide={(rideId, points, route, rideName) =>
                 handleSelectPastRide(rideId, points, route, rideName)
               }
@@ -275,6 +273,10 @@ export function App() {
                   handleSelectPastRide(rideId, points, route)
                 }
               />
+            ) : profileView === 'nerds' ? (
+              <DataForNerds
+                onBack={() => setProfileView('profile')}
+              />
             ) : (
               <UserProfile
                 userId={userId}
@@ -284,6 +286,7 @@ export function App() {
                 onToggleDarkMode={handleToggleDarkMode}
                 onLogout={handleLogout}
                 onViewRideHistory={() => setProfileView('rides')}
+                onViewNerds={() => setProfileView('nerds')}
               />
             )}
           </div>

@@ -9,6 +9,7 @@ interface UserProfileProps {
   onToggleDarkMode: () => void
   onLogout: () => void
   onViewRideHistory: () => void
+  onViewNerds: () => void
 }
 
 function getInitial(email: string): string {
@@ -20,9 +21,11 @@ export function UserProfile({
   userId,
   email,
   isDark,
+  isAdmin,
   onToggleDarkMode,
   onLogout,
   onViewRideHistory,
+  onViewNerds,
 }: UserProfileProps) {
   const [totalRides, setTotalRides] = useState(0)
   const [totalDistanceKm, setTotalDistanceKm] = useState(0)
@@ -151,6 +154,15 @@ export function UserProfile({
         >
           My Rides
         </button>
+
+        {isAdmin && (
+          <button
+            onClick={onViewNerds}
+            className="w-full text-left border border-gray-200 dark:border-zinc-800 px-3 py-2 text-sm text-gray-900 dark:text-zinc-100 bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800"
+          >
+            Data for Nerds
+          </button>
+        )}
 
         <button
           onClick={onLogout}

@@ -2,9 +2,6 @@ import { useState } from 'react'
 import type { RidePoint } from '../../types/index'
 import { RideMap } from '../Map/RideMap'
 import { downloadGPX } from '../../lib/gpx'
-import { AccelGraph } from './AccelGraph'
-import { RoughPointMarkers } from './RoughPointMarkers'
-import { RoadQualitySummary } from './RoadQualitySummary'
 
 interface RideTimelineProps {
   points: RidePoint[]
@@ -12,11 +9,9 @@ interface RideTimelineProps {
   onClose?: () => void
   title?: string
   rideName?: string
-  isAdmin?: boolean
 }
 
-export function RideTimeline({ points, route, onClose, title = 'Ride Details', rideName, isAdmin = false }: RideTimelineProps) {
-  const [showQuality, setShowQuality] = useState(false)
+export function RideTimeline({ points, route, onClose, title = 'Ride Details', rideName }: RideTimelineProps) {
   const [index, setIndex] = useState(0)
   const total = points.length
   const current = points[index]
@@ -126,30 +121,7 @@ export function RideTimeline({ points, route, onClose, title = 'Ride Details', r
         >
           Export GPX
         </button>
-
-        {/* Road quality — admin only */}
-        {isAdmin && (
-          <button
-            onClick={() => setShowQuality(!showQuality)}
-            className={`mt-2 w-full py-1.5 text-xs font-medium border rounded transition-colors ${
-              showQuality
-                ? 'text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-700 bg-orange-50 dark:bg-orange-950'
-                : 'text-gray-600 dark:text-gray-400 border-gray-300 dark:border-zinc-700'
-            }`}
-          >
-            {showQuality ? 'Hide Road Quality' : 'Show Road Quality'}
-          </button>
-        )}
       </div>
-
-      {/* Road quality panel — admin only */}
-      {isAdmin && showQuality && (
-        <div className="absolute bottom-[140px] left-0 right-0 max-h-[45%] overflow-y-auto bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm border-t border-gray-200 dark:border-zinc-700 px-4 py-3 z-[999]">
-          <RoadQualitySummary points={points} />
-          <AccelGraph points={points} />
-          <RoughPointMarkers points={points} />
-        </div>
-      )}
     </div>
   )
 }

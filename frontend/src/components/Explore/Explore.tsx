@@ -2,11 +2,9 @@ import { useState, useEffect } from 'react'
 import type { Ride, RidePoint } from '../../types/index'
 import { supabase } from '../../lib/supabase'
 import { parseLocation } from '../../lib/geo'
-import { ChennaiHeatmap } from './ChennaiHeatmap'
 
 interface ExploreProps {
   userId: string
-  isAdmin?: boolean
   onSelectRide: (rideId: string, points: RidePoint[], route: [number, number][], rideName: string, sourceTab?: 'profile' | 'explore') => void
 }
 
@@ -33,11 +31,10 @@ function getGoogleMapsUrl(firstLat: number, firstLng: number, lastLat: number, l
   return `https://www.google.com/maps/dir/?api=1&origin=${firstLat},${firstLng}&destination=${lastLat},${lastLng}`
 }
 
-export function Explore({ userId, isAdmin = false, onSelectRide }: ExploreProps) {
+export function Explore({ userId, onSelectRide }: ExploreProps) {
   const [rides, setRides] = useState<(Ride & { star_count: number; user_starred: boolean })[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [showHeatmap, setShowHeatmap] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -189,31 +186,13 @@ export function Explore({ userId, isAdmin = false, onSelectRide }: ExploreProps)
   return (
     <div className="h-full flex flex-col">
       <div className="flex-shrink-0 px-4 py-3 border-b border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-medium text-gray-900 dark:text-zinc-100">
-              Explore
-            </h2>
-            <p className="text-xs text-gray-500 dark:text-zinc-400 mt-0.5">
-              Public rides from the community
-            </p>
-          </div>
-          {isAdmin && (
-            <button
-              onClick={() => setShowHeatmap(!showHeatmap)}
-              className={`text-xs font-medium px-2 py-1 rounded-full border transition-colors ${
-                showHeatmap
-                  ? 'text-orange-600 dark:text-orange-400 border-orange-300 dark:border-orange-700 bg-orange-50 dark:bg-orange-950'
-                  : 'text-gray-500 dark:text-zinc-400 border-gray-300 dark:border-zinc-600'
-              }`}
-            >
-              {showHeatmap ? 'Hide Heatmap' : 'Road Heatmap'}
-            </button>
-          )}
-        </div>
+        <h2 className="text-lg font-medium text-gray-900 dark:text-zinc-100">
+          Explore
+        </h2>
+        <p className="text-xs text-gray-500 dark:text-zinc-400 mt-0.5">
+          Public rides from the community
+        </p>
       </div>
-
-      <ChennaiHeatmap visible={showHeatmap} />
 
       <div className="flex-1 overflow-y-auto p-4">
         {loading && (
