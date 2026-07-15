@@ -11,7 +11,7 @@ const TOP_N = 5
 
 export function RoughPointMarkers({ points, rideName = 'ride' }: RoughPointMarkersProps) {
   const jerkPoints = useMemo(
-    () => findJerkPoints(points, 1.0).sort((a, b) => b.jerk - a.jerk),
+    () => findJerkPoints(points, 1.0).sort((a, b) => b.zJerk - a.zJerk),
     [points],
   )
 
@@ -27,7 +27,7 @@ export function RoughPointMarkers({ points, rideName = 'ride' }: RoughPointMarke
   return (
     <div className="mx-1 mb-2">
       <div className="text-xs font-medium text-gray-600 dark:text-zinc-300 mb-1">
-        Top {Math.min(TOP_N, jerkPoints.length)} jerks by m/s³
+        Top {Math.min(TOP_N, jerkPoints.length)} Z-axis jerks (vertical impact)
       </div>
       {top.map((jp, rank) => (
         <div
@@ -38,7 +38,10 @@ export function RoughPointMarkers({ points, rideName = 'ride' }: RoughPointMarke
             {rank + 1}
           </span>
           <span className="text-gray-900 dark:text-zinc-100 font-medium tabular-nums">
-            {jp.jerk} m/s³
+            Z {jp.zJerk} m/s³
+          </span>
+          <span className="text-gray-400 dark:text-zinc-500 tabular-nums">
+            X {jp.xJerk} · Y {jp.yJerk}
           </span>
           <span className="text-gray-400 dark:text-zinc-500 tabular-nums">
             jounce {jp.jounce} m/s⁴
@@ -55,7 +58,7 @@ export function RoughPointMarkers({ points, rideName = 'ride' }: RoughPointMarke
       {rest.length > 0 && (
         <>
           <div className="text-xs font-medium text-gray-500 dark:text-zinc-400 mt-3 mb-1">
-            All detections ({jerkPoints.length} above 1.0 m/s³)
+            All detections ({jerkPoints.length} above 1.0 m/s³ Z)
           </div>
           {rest.map((jp) => (
             <div
@@ -63,10 +66,10 @@ export function RoughPointMarkers({ points, rideName = 'ride' }: RoughPointMarke
               className="flex items-center gap-2 px-2 py-0.5 text-xs"
             >
               <span className="text-gray-500 dark:text-zinc-400 tabular-nums">
-                {jp.jerk} m/s³
+                Z {jp.zJerk} m/s³
               </span>
               <span className="text-gray-400 dark:text-zinc-500 tabular-nums">
-                jounce {jp.jounce} m/s⁴
+                X {jp.xJerk} · Y {jp.yJerk}
               </span>
               <span className="text-gray-400 dark:text-zinc-500 tabular-nums">
                 {jp.lat.toFixed(4)}, {jp.lng.toFixed(4)}
